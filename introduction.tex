@@ -1,0 +1,67 @@
+\chapter{Introduction}
+
+\section{Motivation}
+
+While there has been plenty of research into simulating sound propagation using both geometric and numerical methods,
+nearly all of it only concerns itself with static scenes,
+where neither objects within the scene nor the sound emitter nor receiver move with time.
+\newline
+Simulation of dynamic or moving scenes is mostly unexplored:
+Raghuvanshi et al.~\cite{RS10} explore a numerical approach to handle dynamically moving emitters and receivers and
+Chandak et al.~\cite{Cha08} attempt to simulate dynamic scenes in real-time,
+with support for dynamically moving scenes but sacrificing accuracy.
+Besides the AD-Frustum described in~\cite{Cha08} being prone to minor visibility issues,
+it also fails to consider that as sound does not travel instantly,
+objects and receivers can still move while a sound wave is traversing the scene.
+This same issue also occurs in EAR, a simulation tool that supports blender's keyframe system for moving scenes.
+\newline
+% TODO: cite EAR
+This is because of the approach both Chandak~\cite{Cha08} and EAR use, which will be called the snapshot method in this thesis:
+At the time rays are emitted to create an impulse response, a snapshot of the scene in its current state is taken,
+then rays are bounced through this snapshot.
+This approach comes with a few advantages:
+As the snapshot is essentially just a static scene, the same bouncing logic used for static scenes can be copied without changes.
+Also, crucially, knowledge of how the scene will move over the time the ray spends bouncing around it is not required.
+All data necessary to simulate the bouncing is available at the time the ray is emitted,
+without a need for information on how the scene will continue to move.
+This is especially helpful for real-time simulation of dynamic scenes, as data about how the scene will continue to move is not
+fully known at runtime.
+\newline
+The downside of this snapshot approach is that it tends to introduce errors when objects or receivers move at high speeds.
+% TODO visualisation
+As a simple example case, take the scene described in (IMAGE):
+A receiver starts 343 meters away from an emitter and moves towards it at 1/9th the speed of sound, roughly 38 meters per second
+(137.2 kilometers per hour, a speed most modern cars can reach without problems).
+Using the snapshot approach, a ray traveling directly from emitter to receiver would arrive after travelling the full 343 meters,
+taking 1 second for it to arrive at the receiver.
+In actuality, in the time the ray takes to travel the first 90\% of that distance,
+the receiver has already travelled the remaining 10\%, making for a response time of 0.9 seconds rather than 1 second.
+\newline
+While Bilibashi et al.~\cite{BVD20} have attempted to solve this issue,
+they only aimed to simulate waves bouncing between a few set points, namely cars,
+rather than simulating full room acoustics.
+
+\section{Scope}
+
+This thesis proposes a method to simulate rays bouncing through arbitrary scenes with moving receivers and/or objects,
+assuming all movement within the scene is known at time of calculation.
+An improved way of checking for intersections between rays and objects is developed, accommodating for this new requirement.
+Additionally, a method is developed to to losslessly and efficiently store the multiple impulse responses created by re-calculating
+the impulse responses for different points in time.
+The goal of this research is to simulate effects such as the situation described in (IMAGE) without errors introduced by the snapshot method
+as well as accurately recreate the acoustics of a hypothetical, rapidly rotating room.
+Three test cases are developed for this and compared to an implementation of the snapshot method: 
+An empty scene with the sound receiver approaching the sound emitter at 1/3 the speed of sound,
+a square room rapidly rotating
+and a large, L-shaped room also rapidly rotating around one of its ends, with the receiver and emitter both sitting in said end.
+\newline
+Side effects of moving scenes, such as sounds emitted by moving objects, are discarded as they are irrelevant to
+the changed intersection logic.
+A note-worthy side effect that gets ignored is mass inertia:
+The example case where this would become relevant is the inside of a linearly moving enclosed room, such as a driving car.
+Due to inertia, the acoustics inside this moving room are the same as if the car stood still.
+Since this effect is only relevant in a niche scenario and it can be simulated using a method that ignores movement entirely,
+it can be ignored for this research.
+\newline
+Real-time applications cannot use this proposed method as it requires knowledge of the scene's further development ahead of time.
+Further research is required to develop an alternative method for real-time or dynamic simulations.
