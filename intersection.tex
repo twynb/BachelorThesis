@@ -1,5 +1,382 @@
 \chapter{Interpolating Intersection Checks}
 
+To bounce a ray through a scene, checks need to be performed to know which object the ray intersects with first and thus bounces off of.
+These checks are usually done by modelling objects using an equation that describes whether a point is on the object surface or not,
+then injecting the ray's function into that equation and resolving.
+With static objects, this check is trivial:
+The only parameter to resolve for is the intersection time \(t\), and said parameter only occurs in the ray function.
+\newline
+With moving objects, this check becomes more complicated: The equation still needs to be resolved for \(t\),
+but now \(t\) is also part of the surface equation itself.
+In this chapter, equations are established and solved to perform intersection checks with moving spheres and surfaces,
+as those two should already be sufficient to simulate most scenes.
+Resolution for other primitives, such as quadric surfaces, should be derivable in a similar way.
+\newline
+A ray \(R\)'s position at time \(t\), with \(R\) starting at the point \(P\) at time \(t_0\) and travelling in the direction \(v\) can be defined as follows:
+
+\begin{equation}\label{RayEq}
+    R(t) = P + (t - t_0) \cdot v
+\end{equation}
+
+Note that unlike with most ray tracing implementations, the magnitude of the direction vector \(v\) is significant:
+Since the movement of objects checked for intersections is also dependent on time,
+objects and the ray must move at the same time scale.
+\(v\) must accordingly be scaled to fit the velocity of the ray and the implementation's scale for \(t\) and coordinates.
+Otherwise, the intersection calculation will yield incorrect results as at the resulting intersection times,
+the ray will either not have travelled to the resulting intersection point yet or will have already surpassed it.
+
 \section{Intersection Checks for Spheres}
 
+A sphere \(C\) is modelled as having a radius \(r\) and a collection of keyframes \(k_n\), each with a center point \(c_{k_n}\) and a time \(t_{k_n}\).
+Intersection calculations need to be run separately for each set of consecutive keyframes \(k_1\) and \(k_2\).
+\newline
+
+The center point \(c_t\) of \(C\) at time \(t\) can be defined as
+
+\begin{equation}
+    c_t = m \cdot c_{k_1} + (1-m) \cdot c_{k_2}
+\end{equation}
+
+With \(m\) representing the interpolation point between the two keyframes.
+For the scope of this thesis, linear interpolation is used, leading to \(m\) being defined as
+
+\begin{equation}\label{MDef}
+    m = \frac{t_{k_2} - t}{t_{k_2} - t_{k_1}}
+\end{equation}
+
+For non-linear interpolation modes between two keyframes (such as using a sinusoidal function),
+\(m\) is defined differently. The math below is still the same until \eqref{SphereBeforeM} where \(m\) is resolved,
+at which point the new definition of \(m\) must be substituted instead of the definition above.
+Resolving from there should be trivial, depending on the definition of \(m\).
+\newline
+For interpolation modes that work with more than two keyframes (such as splines),
+\(c_t\) would instead need to be defined using that other interpolation function,
+and the scope of which set of keyframes applies to which range of \(t\) would need to be limited accordingly.
+Exploring this is outside the scope of this thesis.
+\newline
+
+For any given time \(t\), the surface of \(C\) is then defined as all points \(x\) for which
+
+\begin{equation}\label{SphereDef}
+    \|x-c_t\|^2 = r^2
+\end{equation}
+
+Inserting \eqref{RayEq} in place of \(x\) in \eqref{SphereDef}:
+
+\begin{equation}
+    \|P + (t - t_0) \cdot v - c_t\|^2 = r^2
+\end{equation}
+
+\begin{equation*}
+    (P - c_{k_2} + t \cdot v - t_0 \cdot v + m \cdot (c_{k_2} - c_{k_1})) \cdot (P - c_{k_2} + t \cdot v - t_0 \cdot v + m \cdot (c_{k_2} - c_{k_1})) = r^2
+\end{equation*}
+
+Resolving this and defining \(\delta c = c_{k_2} - c_{k_1}\) results in a function of \(t\) and \(m\):
+
+\begin{equation}\label{SphereBeforeM}
+    \begin{split}
+        \|P - c_{k_2}\|^2
+        - 2 \cdot t_0 \cdot P \cdot v
+        + 2 \cdot t_0 \cdot c_{k_2} \cdot v
+        + t_0^2 \cdot \|v\|^2
+        \\
+        + t \cdot 2 \cdot (P \cdot v - c_{k_2} \cdot v)
+        - t \cdot 2 \cdot t_0 \cdot \|v\|^2
+        \\
+        + m \cdot 2 \cdot (P \cdot dc - c_{k_2} \cdot \delta c)
+        - m \cdot 2 \cdot t_0 \cdot v \cdot \delta c
+        \\
+        + t \cdot m \cdot 2 \cdot v \cdot \delta c
+        + t^2 \cdot \|v\|^2
+        + m^2 \cdot \|\delta c\|^2
+        \\
+        = r^2
+    \end{split}
+\end{equation}
+
+Now, to get a polynomial function of \(t\), \(m\) needs to be resolved.
+With the linear definition of \(m\) from above, this results in the following equation:
+
+\begin{equation*}
+    \begin{split}
+        \|P - c_{k_2}\|^2
+        - 2 \cdot t_0 \cdot P \cdot v
+        + 2 \cdot t_0 \cdot c_{k_2} \cdot v
+        + t_0^2 \cdot \|v\|^2
+        \\
+        + t \cdot 2 \cdot (P \cdot v - c_{k_2} \cdot v)
+        - t \cdot 2 \cdot t_0 \cdot \|v\|^2
+        \\
+        + \frac{(t_{k_2} - t) \cdot
+            2 \cdot (P \cdot \delta c - c_{k_2} \cdot \delta c - t_0 \cdot v \cdot \delta c)
+        }{t_{k_2} - t_{k_1}}
+        + \frac{t \cdot (t_{k_2} - t) \cdot 2 \cdot v \cdot \delta c}{t_{k_2} - t_{k_1}}
+        \\
+        + t^2 \cdot \|v\|^2
+        + \frac{(t_{k_2} - t)^2 \cdot \|\delta c\|^2}{(t_{k_2} - t_{k_1})^2}
+        \\
+        = r^2
+    \end{split}
+\end{equation*}
+
+Introducing \(\delta t = t_{k_1} - t_{k_2}\) for readability, this resolves to a 2nd degree polynomial:
+
+\begin{equation}
+    d_2t^2 + d_1t + t_0 = 0
+\end{equation}
+
+with
+
+\begin{equation}
+    d_2 = \|v\|^2 \cdot \delta t^2
+    + \|\delta c\|^2
+    - 2 \cdot v \cdot \delta c \cdot \delta t
+\end{equation}
+\begin{equation}
+    d_1 = 2 \cdot (
+    (P - c_{k_2}) \cdot v \cdot \delta t^2
+    - t_0 \cdot \|v\|^2
+    - (P - c_{k_2} - t_0 \cdot v) \cdot \delta c \cdot \delta t
+    + t_{k_2} \cdot v \cdot \delta c \cdot \delta t
+    - t_{k_2} \cdot \|\delta c\|^2
+    )
+\end{equation}
+\begin{equation}
+    \begin{split}
+        d_0 = (
+        \|P - c_{k_2}\|^2
+        + 2 \cdot t_0 \cdot (c_{k_2} - P) \cdot v
+        + t_0^2 \cdot \|v\|^2
+        ) \cdot \delta t^2
+        \\
+        + t_{k_2} \cdot 2 \cdot (P - c_{k_2} - t_0 \cdot v) \cdot dc \cdot \delta t
+        + t_{k_2}^2 \cdot \|dc\|^2
+        - r^2 \cdot \delta t^2
+    \end{split}
+\end{equation}
+
+If \(r\) can also be varied between keyframes,
+replace \(r^2\) with the according interpolated value \((m - r_{k_1} + (1-m) r_{k_2})^2\) and resolve accordingly.
+\newline
+The real roots of this equation represent all times at which the sphere and ray would theoretically intersect.
+Note that all roots \(t\) where \(t < t_{k_1}\) or \(t > t_{k_2}\) must be discarded
+because the surface is not described by \(k_1\) and \(k_2\) outside the time frame between them.
+Additionally, all roots where \(t \le t_0\) must be discarded as these intersections would happen before the ray started,
+behind its starting location.
+\newline
+Of the real roots remaining after this filter, the lowest result for \(t\) is the one where the ray and sphere intersect,
+assuming the ray does not bounce off of a different object before that.
+The coordinates at which the intersection takes place can be calculated by calculating \(R(t)\).
+
+% TODO find case where d2=d1=d0=0
+
 \section{Intersection Checks for Surfaces}
+
+Similarly to spheres, a polygonal surface \(S\) can also be modelled using a set of keyframes \(k_n\),
+each with points \(P_{1..o, k_n}\) for the corners of the surface, with \(o \ge 3\) and \(o\) being consistent between keyframes.
+As with spheres, intersection calculations need to be run separately for each set of consecutive keyframes \(k_1\) and \(k_2\).
+\newline
+Using \(m\) from \eqref{MDef} with the same caveats, each point \(P_{n, t}\) is calculated as
+
+\begin{equation}\label{SurfacePointDef}
+    P_{n, t} = m \cdot P_{n, k_1} + (1 - m) \cdot P_{n, k_2}, 1 \le n \le o
+\end{equation}
+
+Assuming all points of the polygon are within one surface,
+the surface containing the polygon at any given time \(t\) can be described as the set of all points \(x\) where
+
+\begin{equation}\label{SurfaceDef}
+    (x - P_{1, t}) \cdot ((P_{2, t} - P_{1, t}) \times (P_{3, t} - P_{1, t})) = 0
+\end{equation}
+
+Injecting \eqref{RayEq} into \eqref{SurfaceDef}:
+
+\begin{equation}
+    (P + t \cdot v - t_0 \cdot v - P_{1, t}) \cdot ((P_{2, t} - P_{1, t}) \times (P_{3, t} - P_{1, t})) = 0
+\end{equation}
+
+Exploiting that the vector cross product is distributive over addition (i.e. \( (x + y) \times z = x \times z + y \times z\)):
+
+\begin{equation*}
+    (P + t \cdot v - t_0 \cdot v - P_{1, t}) \cdot
+    (P_{2, t} \times P_{3, t} - P_{2, t} \times P_{1, t} - P_{1, t} \times P_{3, t} + P_{1, t} \times P_{1, t})
+\end{equation*}
+
+As the cross product of a vector with itself is always 0, the last part can be discarded:
+
+\begin{equation}\label{SurfaceBeforeCross}
+    (P + t \cdot v - t_0 \cdot v - P_{1, t}) \cdot
+    (P_{2, t} \times P_{3, t} - P_{2, t} \times P_{1, t} - P_{1, t} \times P_{3, t})
+\end{equation}
+
+Each of these cross products should be solved individually before resolving the full equation.
+Using \eqref{SurfacePointDef}:
+
+\begin{equation}
+    P_{a, t} \times P_{b, t}
+    = ((1-m) \cdot P_{a, k_2} + m \cdot P_{a, k_1}) \times ((1-m) \cdot P_{b, k_2} + m \cdot P_{b, k_1})
+\end{equation}
+
+Again exploiting that the cross product is distributive over addition, as well as the fact that with a scalar \(a\),
+\(a \cdot (x \times y) = x \times (a \cdot y)\), this can be resolved to a polynomial function of \(m\):
+
+\begin{equation}
+    \begin{split}
+        P_{a, t} \times P_{b, t} =
+        P_{a, k_2} \times P_{b, k_2}
+        + m \cdot (
+        - 2 (P_{a, k_2} \times P_{b, k_2})
+        + (P_{a, k_1} \times P_{b, k_2})
+        + (P_{a, k_2} \times P_{b, k_1})
+        )
+        \\
+        + m^2 \cdot (
+        (P_{a, k_2} \times P_{b, k_2})
+        - (P_{a, k_1} \times P_{b, k_2})
+        - (P_{a, k_2} \times P_{b, k_1})
+        + (P_{a, k_1} \times P_{b, k_1})
+        )
+    \end{split}
+\end{equation}
+
+As with \eqref{SphereBeforeM}, to get a function of \(t\),
+\(m\) needs to replaced with its definition (\eqref{MDef} in this case):
+
+\begin{multline*}
+    P_{a, t} \times P_{b, t} =
+    \\
+    P_{a, k_2} \times P_{b, k_2}
+    + \frac{(t_{k_2} - t) \cdot (
+        - 2 (P_{a, k_2} \times P_{b, k_2})
+        + (P_{a, k_1} \times P_{b, k_2})
+        + (P_{a, k_2} \times P_{b, k_1})
+        )}{t_{k_2} - t_{k_1}}
+    \\
+    + \frac{(t_{k_2} - t)^2 \cdot (
+        (P_{a, k_2} \times P_{b, k_2})
+        - (P_{a, k_1} \times P_{b, k_2})
+        - (P_{a, k_2} \times P_{b, k_1})
+        + (P_{a, k_1} \times P_{b, k_1})
+        )}{(t_{k_2} - t_{k_1})^2}
+\end{multline*}
+
+Again introducing \(\delta t = t_{k_2} - t_{k_1}\) for readability,
+this can be resolved to a second-degree polynomial:
+
+\begin{equation}\label{SurfaceCrossPoly}
+    P_{a, t} \times P_{b, t} = f_{2, a, b}t^2 + f_{1, a, b}t + f_{0, a, b}
+\end{equation}
+
+with
+
+\begin{equation}
+    f_{2, a, b} = (P_{a, k_2} \times P_{b, k_2})
+    - (P_{a, k_1} \times P_{b, k_2})
+    - (P_{a, k_2} \times P_{b, k_1})
+    + (P_{a, k_1} \times P_{b, k_1})
+\end{equation}
+\begin{equation}
+    \begin{split}
+        f_{1, a, b} = - \delta t \cdot (
+        - 2 (P_{a, k_2} \times P_{b, k_2})
+        + (P_{a, k_1} \times P_{b, k_2})
+        + (P_{a, k_2} \times P_{b, k_1})
+        )
+        \\
+        - 2 \cdot t_{k_2} \cdot (
+        (P_{a, k_2} \times P_{b, k_2})
+        - (P_{a, k_1} \times P_{b, k_2})
+        - (P_{a, k_2} \times P_{b, k_1})
+        + (P_{a, k_1} \times P_{b, k_1})
+        )
+    \end{split}
+\end{equation}
+\begin{equation}
+    \begin{split}
+        f_{0, a, b} = \delta t^2 \cdot (P_{a, k_2} \times P_{b, k_2})
+        \\
+        + t_{k_2} \cdot \delta t \cdot (
+        - 2 (P_{a, k_2} \times P_{b, k_2})
+        + (P_{a, k_1} \times P_{b, k_2})
+        + (P_{a, k_2} \times P_{b, k_1})
+        )
+        \\
+        + t_{k_2}^2 \cdot (
+        (P_{a, k_2} \times P_{b, k_2})
+        - (P_{a, k_1} \times P_{b, k_2})
+        - (P_{a, k_2} \times P_{b, k_1})
+        + (P_{a, k_1} \times P_{b, k_1})
+        )
+    \end{split}
+\end{equation}
+
+Inserting \eqref{SurfaceCrossPoly} into \eqref{SurfaceBeforeCross}:
+
+\begin{equation*}
+    (P + t \cdot v - t_0 \cdot v - P_{1, t}) \cdot
+    (f_{2, 2, 3} t^2 + f_{1, 2, 3} t + f_{0, 2, 3} - f_{2, 2, 1} t^2 - f_{1, 2, 1} t - f_{0, 2, 1} - f_{2, 1, 3} t^2 - f_{1, 1, 3} t - f_{0, 1, 3})
+    = 0
+\end{equation*}
+
+Introducing \(g_n = f_{n, 2, 3} - f_{n, 2, 1} - f_{n, 1, 3}\) for readability,
+resolving \(P_{1, t}\) as per \eqref{SurfacePointDef} and introducing \(\delta P_1 = P_{1, k_2} - P_{1, k-1}\):
+
+\begin{equation}
+    (P + t \cdot v - t_0 \cdot v - P_{1, k_2} + \frac{t_{k_2} \delta P_1}{\delta t} - \frac{t \cdot \delta P_1}{\delta t}) \cdot
+    (
+    t^2 g_2
+    + t g_1
+    + g_0
+    )
+    = 0
+\end{equation}
+
+This can be resolved to a third degree polynomial:
+
+\begin{equation}
+    t^3d_3 + t^2d_2 + td_1 + d_0 = 0
+\end{equation}
+
+With
+
+\begin{equation}
+    d_3 = g_2 \cdot v
+    - \frac{g_2 \cdot \delta P_1}{\delta t}
+\end{equation}
+\begin{equation}
+    d_2 = g_2 \cdot P
+    - t_0 \cdot g_2 \cdot v
+    - g_2 \cdot P_{1, k_2}
+    + \frac{t_{k_2} \cdot g_2 \cdot \delta P_1}{\delta t}
+    + g_1 \cdot v
+    - \frac{g_1 \cdot \delta P_1}{\delta t}
+\end{equation}
+\begin{equation}
+    d_1 = g_1 \cdot P
+    - t_0 \cdot g_1 \cdot v
+    - g_1 \cdot P_{1, k_2}
+    + \frac{t_{k_2} \cdot g_1 \cdot \delta P_1}{\delta t}
+    + g_0 \cdot v
+    - \frac{g_0 \cdot \delta P_1}{\delta t}
+\end{equation}
+\begin{equation}
+    d_0 = g_0 \cdot P
+    - t_0 \cdot g_0 \cdot v
+    - g_0 \cdot P_{1, k_2}
+    + \frac{t_{k_2} \cdot g_0 \cdot \delta P_1}{\delta t}
+\end{equation}
+
+This polynomial can then be solved using a general cubic formula such as the one described by Abramowitz and Stegun~\cite{AS48}
+or Flocke's Algorithm~\cite{Fl15}.
+\newline
+As with spheres, the real roots of this equation are all the points in time at which the ray and the surface would meet.
+Roots \(t\) where \(t < t_{k_1}\) or \(t > t_{k_2}\), as well as roots where \(t \le t_0\),
+must be discarded as explained above.
+\newline
+For the remaining roots, another check needs to be done
+for whether the intersection point \(R(t)\) is actually inside the polygon, and not just on the same surface.
+With triangles, this can be trivially done by calculating the homogenous barycentric coordinates \(\alpha, \beta, \gamma\) of \(R(t)\)
+and verifying that \(0 \le \alpha \le 1, 0 \le \beta \le 1, 0 \le \gamma \le 1, \alpha + \beta + \gamma = 1\).
+\newline
+The root with the lowest value that satisfies the above conditions again represents the time where the ray and polygon intersect,
+assuming there is no intersection happening before. If no root satisfies these conditions, no intersection happens.
