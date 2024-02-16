@@ -5,31 +5,41 @@
 One common optimisation for ray tracing systems is to limit the amount of intersection calculations by eliminating
 objects the ray cannot intersect with in a simpler way.
 There are two general sets of methods used for this:
-Bounding Volume Hierarchies (BVHs, first proposed by Clarke~\cite{Cl76})
-% TODO cite fujimoto and iwata
-and Chunks (first proposed by Fujimoto and Iwata).
-BVHs work by enclosing each object within a volume, intersections with which can easily be calculated.
-Then, these volumes are combined in a hierarchical tree structure.
-If a ray doesn't intersect with a bounding volume high up in the hierarchy,
-all intersection checks with bounding volumes encapsulated by it and their respective objects can be skipped.
-Chunking instead segments the scene into separate chunks, each of which then keeps track of which objects are inside it.
-Rays can simply traverse from chunk to chunk and only do intersection checks for objects contained within those chunks.
+\newline
+Bounding Volume Hierarchies (BVHs), first proposed by Clarke~\cite{Cl76},
+work by enclosing each object in the scene within a volume containing it.
+This bounding volume uses a simpler geometric primitive that allows for faster intersection checks than the object itself,
+usually quadric surfaces or spheres.
+These bounding volumes are then grouped into bigger bounding volumes into a hierarchical tree structure.
+Rays then walk down the tree structure, checking for intersections with the corresponding bounding volumes.
+If it does not intersect with a branch's bounding volume,
+any objects within that branch can be ignored for further intersection checks.
+\newline
+Chunks, first proposed as a Three Dimensional Digital Differential Analyzer by Fujimoto and Iwata~\cite{FI85},
+instead divide a scene into separate cells (chunks),
+with each chunk keeping a list of which objects are inside it.
+Rays can then traverse from chunk to chunk along their trajectory
+and only check for intersections with the objects contained in the chunk they're currently in.
 \newline
 Since objects can move around the scene, using one of these methods without changes becomes inefficient.
 If, for example, a receiver moves from one end of the scene to the other over the course of ten seconds,
 its bounding volume would extend over all of that distance for the entirety for the scene, despite it not touching
 the majority of it for the most part. Similarly, it would be kept in its starting position's chunk for the entirety
-of the scene, despite leaving that area very early.
+of the scene despite leaving that area very early, making for needless intersection checks.
 \newline
 For this use case, chunks become a lot more efficient than BVHs:
-When taking time into account, each object would need separate bounding volumes for separate points in time,
+When taking movement over time into account, each object would need separate bounding volumes for separate segments of time,
 forcing a ray to not just check one bounding volume, but multiple per object.
 This also means that in order to be able to create meaningful bounding volume hierarchies,
 each object's bounding volumes would need to be separated at the same points in time,
 which can lead to redundancies if objects move at different times.
+Calculating a useful BVH becomes impossible.
 \newline
 The amount of chunks, in turn, does not change:
-They can be adapted simply by changing how they store which objects are inside them at which time.
+They can be adapted simply by storing not just which objects are inside them,
+but also when each object enters and exits the chunk.
+If chunk contents are calculated correctly,
+this means that no intersection checks take place for objects that aren't inside the given chunk at the given time.
 
 \section{Data Structure}
 
@@ -39,8 +49,8 @@ One containing the index of the object in question,
 one containing the time at which the object enters the chunk
 and one containing the time at which the object leaves the chunk.
 Since the latter two fields might both be optional if the scene starts/ends with the object inside the scene,
-% TODO source for additive/multiplicative type
-this can be nicely represented using an additive type such as Rust's Enumerators with different states:
+% TODO source for sum/product type
+this can be nicely represented using a sum type such as Rust's Enumerators or C's union types with different states:
 
 \begin{verbatim}
 // Object stays within chunk for the whole scene
@@ -55,12 +65,18 @@ Final(object, time_entry)
 
 As the scene's start time is known and the state of objects before it is irrelevant,
 a state containing only an exit time is not necessary as it can be modelled using the
-\verb|Dynamic| state with a \verb|time_entry| of 0.
-In a more common multiplicative type, chunk entries can instead be represented as a
-struct or class where the entry and exit times are optional fields.
+\verb|Dynamic| state with a \verb|time_entry| matching the scene's starting time.
+Using a more common product type system, chunk entries can instead be represented as a
+struct or class where the entry and exit times are optional or nullable fields.
 \newline
-A ray traversing this scene can now simply check when it enters and exits a chunk and pick out the objects to check for intersections
-with accordingly.
+A ray traversing this scene can now simply check when it enters and exits a chunk
+and pick out the objects to check for intersections with accordingly.
+When using sum types, the space requirements for static objects only increase by one byte denoting the type's variant
+(with even that potentially getting left out, as Herzog showed~\cite{He23}).
+For moving objects, only up to two additional fields plus the variant field are required,
+with the timestamp fields' size depending on the implementation.
+Compared to the performance gains from avoiding needless intersection checks,
+this additional space requirement is comparatively minimal.
 
 \section{Calculating Chunks}
 

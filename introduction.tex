@@ -6,21 +6,38 @@ While there has been plenty of research into simulating sound propagation using 
 nearly all of it only concerns itself with static scenes,
 where neither objects within the scene nor the sound emitter nor receiver move with time.
 \newline
-Simulation of dynamic or moving scenes is mostly unexplored:
-Raghuvanshi et al.~\cite{RS10} explore a numerical approach to handle dynamically moving emitters and receivers and
+Simulation of dynamic or moving scenes is mostly unexplored.
+This is mostly because it is only really relevant for scenarios
+where objects or receivers can move at speeds within one or two orders of magnitude from the ray's travelling speed.
+If this condition is not fulfilled,
+the error introduced from the snapshot method described below becomes minimal enough to be disregarded.
+Since this condition does not apply to light
+(the highest speed a human has ever moved at, 39,937.7 km/h, does not come anywhere near the speed of light),
+errors introduced to computer graphics by the snapshot method are especially small.
+Only a comparatively small part of the research into ray tracing comes from outside of computer graphics,
+and even in other fields, such as acoustics simulation,
+the error introduced by the snapshot method is only relevant in edge cases.
+Despite this, some research into simulating moving or dynamic scenes' acoustics has been done:
+Raghuvanshi et al.~\cite{RS10} explore a numerical approach to handle dynamically moving emitters and receivers,
+but do not look into moving objects within the scene.
 Chandak et al.~\cite{Cha08} attempt to simulate dynamic scenes in real-time,
 with support for dynamically moving scenes but sacrificing accuracy.
-Besides the AD-Frustum described in~\cite{Cha08} being prone to minor visibility issues,
-it also fails to consider that as sound does not travel instantly,
-objects and receivers can still move while a sound wave is traversing the scene.
-This same issue also occurs in EAR, a simulation tool that supports blender's keyframe system for moving scenes.
-\newline
+This is less exploring how to handle moving scenes
+and more exploring methods to run acoustics simulation fast enough
+to re-calculate acoustics at a similar rate to that at which objects move by significant amounts.
 % TODO: cite EAR
-This is because of the approach both Chandak~\cite{Cha08} and EAR use, which will be called the snapshot method in this thesis:
-At the time rays are emitted to create an impulse response, a snapshot of the scene in its current state is taken,
-then rays are bounced through this snapshot.
-This approach comes with a few advantages:
-As the snapshot is essentially just a static scene, the same bouncing logic used for static scenes can be copied without changes.
+Similarly, EAR, an acoustics simulation tool based on the 3d modelling software blender,
+allows for moving scenes through blender's keyframe system,
+but is inaccurate for the same reason as Chandak's real-time approach:
+\newline
+Both EAR and Chandak et al.\ approach the simulation of moving scenes by taking a static version of the scene
+at the time rays are emitted to create an impulse response,
+then bouncing rays through this static snapshot.
+This approach will be called the snapshot method in this thesis.
+\newline
+The snapshot method comes with a few advantages:
+As the snapshot is just a static scene,
+the same well-explored and -optimised bouncing logic used for static scenes can be copied without changes.
 Also, crucially, knowledge of how the scene will move over the time the ray spends bouncing around it is not required.
 All data necessary to simulate the bouncing is available at the time the ray is emitted,
 without a need for information on how the scene will continue to move.
@@ -40,6 +57,11 @@ the receiver has already travelled the remaining 10\%, making for a response tim
 While Bilibashi et al.~\cite{BVD20} have attempted to solve this issue,
 they only aimed to simulate waves bouncing between a few set points, namely cars,
 rather than simulating full room acoustics.
+Their vector-based approach cannot be used for a full scene simulation.
+\newline
+To accurately simulate both edge cases occurring in the real world (such as the example above)
+and hypothetical situations such as the test cases described below,
+a new method needs to be developed.
 
 \section{Scope}
 
@@ -50,7 +72,7 @@ Additionally, a method is developed to to losslessly and efficiently store the m
 the impulse responses for different points in time.
 The goal of this research is to simulate effects such as the situation described in (IMAGE) without errors introduced by the snapshot method
 as well as accurately recreate the acoustics of a hypothetical, rapidly rotating room.
-Three test cases are developed for this and compared to an implementation of the snapshot method: 
+Three test cases are developed for this and compared to an implementation of the snapshot method:
 An empty scene with the sound receiver approaching the sound emitter at 1/3 the speed of sound,
 a square room rapidly rotating
 and a large, L-shaped room also rapidly rotating around one of its ends, with the receiver and emitter both sitting in said end.
@@ -59,9 +81,12 @@ Side effects of moving scenes, such as sounds emitted by moving objects, are dis
 the changed intersection logic.
 A note-worthy side effect that gets ignored is mass inertia:
 The example case where this would become relevant is the inside of a linearly moving enclosed room, such as a driving car.
-Due to inertia, the acoustics inside this moving room are the same as if the car stood still.
+Due to mass inertia, sound waves travelling inside this moving rome behave the same as if the car stood still.
 Since this effect is only relevant in a niche scenario and it can be simulated using a method that ignores movement entirely,
 it can be ignored for this research.
 \newline
-Real-time applications cannot use this proposed method as it requires knowledge of the scene's further development ahead of time.
+Real-time applications cannot use this proposed method as it requires knowledge of objects' future movements ahead of time.
 Further research is required to develop an alternative method for real-time or dynamic simulations.
+A real-time approach could work by not calculating the rays' entire movements at emission time,
+but instead keeping track of all moving rays and incrementally continuing their journey through the now updated scene
+at recurring intervals.
