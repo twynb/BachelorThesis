@@ -41,7 +41,13 @@ With \(m\) representing the interpolation point between the two keyframes.
 For the scope of this thesis, linear interpolation is used, leading to \(m\) being defined as
 
 \begin{equation}\label{MDef}
-    m = \frac{t_{k_2} - t}{t_{k_2} - t_{k_1}}
+    m = \frac{t_{k_2} - t}{\delta t}
+\end{equation}
+
+with
+
+\begin{equation}
+    \delta t = t_{k_2} - t_{k_1}
 \end{equation}
 
 For non-linear interpolation modes between two keyframes (such as using a sinusoidal function),
@@ -79,18 +85,16 @@ Resolving this and defining \(\delta c = c_{k_2} - c_{k_1}\) results in a functi
         - 2 \cdot t_0 \cdot P \cdot v
         + 2 \cdot t_0 \cdot c_{k_2} \cdot v
         + t_0^2 \cdot \|v\|^2
+        - r^2
         \\
-        + t \cdot 2 \cdot (P \cdot v - c_{k_2} \cdot v)
-        - t \cdot 2 \cdot t_0 \cdot \|v\|^2
-        \\
-        + m \cdot 2 \cdot (P \cdot dc - c_{k_2} \cdot \delta c)
-        - m \cdot 2 \cdot t_0 \cdot v \cdot \delta c
+        + t \cdot 2 \cdot (P \cdot v - c_{k_2} \cdot v - t_0 \cdot \|v\|^2)
+        + m \cdot 2 \cdot (P \cdot \delta c - c_{k_2} \cdot \delta c - t_0 \cdot v \cdot \delta c)
         \\
         + t \cdot m \cdot 2 \cdot v \cdot \delta c
         + t^2 \cdot \|v\|^2
         + m^2 \cdot \|\delta c\|^2
         \\
-        = r^2
+        = 0
     \end{split}
 \end{equation}
 
@@ -103,23 +107,22 @@ With the linear definition of \(m\) from above, this results in the following eq
         - 2 \cdot t_0 \cdot P \cdot v
         + 2 \cdot t_0 \cdot c_{k_2} \cdot v
         + t_0^2 \cdot \|v\|^2
+        - r^2
         \\
-        + t \cdot 2 \cdot (P \cdot v - c_{k_2} \cdot v)
-        - t \cdot 2 \cdot t_0 \cdot \|v\|^2
-        \\
+        + t \cdot 2 \cdot (P \cdot v - c_{k_2} \cdot v - t_0 \cdot \|v\|^2)
         + \frac{(t_{k_2} - t) \cdot
             2 \cdot (P \cdot \delta c - c_{k_2} \cdot \delta c - t_0 \cdot v \cdot \delta c)
-        }{t_{k_2} - t_{k_1}}
-        + \frac{t \cdot (t_{k_2} - t) \cdot 2 \cdot v \cdot \delta c}{t_{k_2} - t_{k_1}}
+        }{\delta t}
         \\
+        + \frac{t \cdot (t_{k_2} - t) \cdot 2 \cdot v \cdot \delta c}{\delta t}
         + t^2 \cdot \|v\|^2
-        + \frac{(t_{k_2} - t)^2 \cdot \|\delta c\|^2}{(t_{k_2} - t_{k_1})^2}
+        + \frac{(t_{k_2} - t)^2 \cdot \|\delta c\|^2}{\delta t^2}
         \\
-        = r^2
+        = 0
     \end{split}
 \end{equation*}
 
-Introducing \(\delta t = t_{k_1} - t_{k_2}\) for readability, this resolves to a 2nd degree polynomial:
+This resolves to a 2nd degree polynomial:
 
 \begin{equation}
     d_2t^2 + d_1t + t_0 = 0
@@ -250,18 +253,17 @@ As with \eqref{SphereBeforeM}, to get a function of \(t\),
         - 2 (P_{a, k_2} \times P_{b, k_2})
         + (P_{a, k_1} \times P_{b, k_2})
         + (P_{a, k_2} \times P_{b, k_1})
-        )}{t_{k_2} - t_{k_1}}
+        )}{\delta t}
     \\
     + \frac{(t_{k_2} - t)^2 \cdot (
         (P_{a, k_2} \times P_{b, k_2})
         - (P_{a, k_1} \times P_{b, k_2})
         - (P_{a, k_2} \times P_{b, k_1})
         + (P_{a, k_1} \times P_{b, k_1})
-        )}{(t_{k_2} - t_{k_1})^2}
+        )}{\delta t^2}
 \end{multline*}
 
-Again introducing \(\delta t = t_{k_2} - t_{k_1}\) for readability,
-this can be resolved to a second-degree polynomial:
+This can be resolved to a second-degree polynomial:
 
 \begin{equation}\label{SurfaceCrossPoly}
     P_{a, t} \times P_{b, t} = f_{2, a, b}t^2 + f_{1, a, b}t + f_{0, a, b}
@@ -269,7 +271,7 @@ this can be resolved to a second-degree polynomial:
 
 with
 
-\begin{equation}
+\begin{equation}\label{SurfaceFStart}
     f_{2, a, b} = (P_{a, k_2} \times P_{b, k_2})
     - (P_{a, k_1} \times P_{b, k_2})
     - (P_{a, k_2} \times P_{b, k_1})
@@ -291,7 +293,7 @@ with
         )
     \end{split}
 \end{equation}
-\begin{equation}
+\begin{equation}\label{SurfaceFEnd}
     \begin{split}
         f_{0, a, b} = \delta t^2 \cdot (P_{a, k_2} \times P_{b, k_2})
         \\
@@ -333,7 +335,7 @@ resolving \(P_{1, t}\) as per \eqref{SurfacePointDef} and introducing \(\delta P
 
 This can be resolved to a third degree polynomial:
 
-\begin{equation}
+\begin{equation}\label{SurfacePolyStart}
     t^3d_3 + t^2d_2 + td_1 + d_0 = 0
 \end{equation}
 
@@ -359,7 +361,7 @@ With
     + g_0 \cdot v
     - \frac{g_0 \cdot \delta P_1}{\delta t}
 \end{equation}
-\begin{equation}
+\begin{equation}\label{SurfacePolyEnd}
     d_0 = g_0 \cdot P
     - t_0 \cdot g_0 \cdot v
     - g_0 \cdot P_{1, k_2}
@@ -375,8 +377,46 @@ must be discarded as explained above.
 \newline
 For the remaining roots, another check needs to be done
 for whether the intersection point \(R(t)\) is actually inside the polygon, and not just on the same surface.
-With triangles, this can be trivially done by calculating the homogenous barycentric coordinates \(\alpha, \beta, \gamma\) of \(R(t)\)
+With triangles, this can be trivially done by calculating the homogenous barycentric coordinates \(\alpha, \beta, \gamma\) of \(R(t)\) for \(S\)
 and verifying that \(0 \le \alpha \le 1, 0 \le \beta \le 1, 0 \le \gamma \le 1, \alpha + \beta + \gamma = 1\).
 \newline
 The root with the lowest value that satisfies the above conditions again represents the time where the ray and polygon intersect,
 assuming there is no intersection happening before. If no root satisfies these conditions, no intersection happens.
+
+\section{Computational Cost}
+
+To gauge the additional computation cost for interpolated intersection checks as opposed to static ones,
+consider the analytical solution for static surface intersection calculations,
+derivation of which (for the ray defined in \eqref{RayEq} and a surface with at least 3 points \(P_{1..3}\)) is trivial:
+
+\begin{equation}
+    t = \frac{(P_1 + t_0 \cdot v - P) \cdot n}{v \cdot n}
+\end{equation}
+
+with
+
+\begin{equation}
+    n = (P_3 - P_1) \times (P_2 - P_1)
+\end{equation}
+
+Naively calculating a cross product requires 6 multiplications and 3 subtractions.
+The dot product requires just 3 multiplications, as does multiplying a scalar onto a coordinate vector.
+This means that to calculate the intersection time for a static surface,
+a total of 15 additions/subtractions, 15 multiplications and 1 division is required.
+As \(n\) is always the same for a surface, it can be cached,
+reducing the cost to only 6 additions/subtractions, 9 multiplications and 1 division.
+
+For the interpolated surface checks, calculating \(f_{0..2, a, b}\) as per \eqref{SurfaceFStart} to \eqref{SurfaceFEnd}
+alone already takes 71 additions/subtractions and 124 multiplications.
+As \(g_{0..2}\) takes 3 sets of \(f\), it thus requires 213 additions/subtractions and 372 multiplications.
+Since \(g_{0..2}\) remains the same for a pair of surface keyframes independently of the incoming ray,
+it can be cached for each keyframe pair. The same applies for \(\delta t\) and \(\delta P_1\),
+which otherwise would introduce one and three subtractions respectively.
+
+Then calculating the surface intersection as per \eqref{SurfacePolyStart}-\eqref{SurfacePolyEnd}
+requires 14 additions/subtractions, 42 multiplications and 3 divisions,
+assuming that \(g_{0..2} \cdot v\) and \(\frac{g_{0..2} \cdot \delta P_1}{\delta t}\)
+are only calculated once each and then reused.
+
+Additionally, this requires resolving the resulting polynomial,
+the cost of which is implementation dependent, but also rather high compared to the static check.
