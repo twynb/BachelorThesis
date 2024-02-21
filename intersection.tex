@@ -4,13 +4,25 @@ To bounce a ray through a scene, checks need to be performed to know which objec
 These checks are usually done by modelling objects using an equation that describes whether a point is on the object surface or not,
 then injecting the ray's function into that equation and resolving.
 With static objects, this check is trivial:
-The only parameter to resolve for is the intersection time \(t\), and said parameter only occurs in the ray function.
+The only parameter to resolve for is the intersection time \(t\), and said parameter only occurs in the ray function,
+usually making for a first-degree polynomial function.
 \newline
 With moving objects, this check becomes more complicated: The equation still needs to be resolved for \(t\),
 but now \(t\) is also part of the surface equation itself.
 In this chapter, equations are established and solved to perform intersection checks with moving spheres and surfaces,
 as those two should already be sufficient to simulate most scenes.
-Resolution for other primitives, such as quadric surfaces, should be derivable in a similar way.
+Resolution for other primitives, such as quadric surfaces, should be derivable using a similar method.
+\newline
+The general scheme for this is as follows:
+First, the object is modelled in a way where its position (or other parameters) is also a function of \(t\).
+Then, like with a normal check, the function modelling the ray is injected into this equation,
+then resolved. This will, in the examples below, result in a polynomial function of a higher degree
+(2nd and 3rd for spheres and surfaces, respectively), which can then be resolved.
+Note that since the resulting polynomial will be of at least 2nd degree, it can have multiple roots.
+Only roots that take place after the ray's starting time are relevant.
+Different primitives might also require different checks to filter out invalid roots depending on how they are modelled,
+the relevant checks for spheres and surfaces will be described below.
+Of the remaining roots, the first one represents the actual intersection time, the remaining ones can be discarded.
 \newline
 A ray \(R\)'s position at time \(t\), with \(R\) starting at the point \(P\) at time \(t_0\) and travelling in the direction \(v\) can be defined as follows:
 
