@@ -68,16 +68,21 @@ a new method needs to be developed.
 This thesis proposes a method to simulate rays bouncing through arbitrary scenes with moving receivers and/or objects,
 assuming all movement within the scene is known at time of calculation.
 An improved way of checking for intersections between rays and objects is developed, accommodating for this new requirement.
+Optimisations are evaluated and a time-based chunking method is developed to avoid needless intersection checks.
 Additionally, a method is developed to to losslessly and efficiently store the multiple impulse responses created by re-calculating
 the impulse responses for different points in time.
 The goal of this research is to simulate effects such as the situation described in (IMAGE) without errors introduced by the snapshot method
-as well as accurately recreate the acoustics of a hypothetical, rapidly rotating room.
+as well as recreate the acoustics of a hypothetical, rapidly rotating room.
 Three test cases are developed for this and compared to an implementation of the snapshot method:
 An empty scene with the sound receiver approaching the sound emitter at 1/3 the speed of sound,
 a square room rapidly rotating
 and a large, L-shaped room also rapidly rotating around one of its ends, with the receiver and emitter both sitting in said end.
 \newline
-Side effects of moving scenes, such as sounds emitted by moving objects, are discarded as they are irrelevant to
+Not within the scope of this thesis is a fully accurate simulation
+including effects such as the differing bouncing behaviour sound waves show at different frequencies.
+Only a proof of concept that shows that the idea of this new simulation method works is developed.
+\newline
+Side effects of moving scenes, such as sounds emitted by moving objects, are also discarded as they are irrelevant to
 the changed intersection logic.
 A note-worthy side effect that gets ignored is mass inertia:
 The example case where this would become relevant is the inside of a linearly moving enclosed room, such as a driving car.
