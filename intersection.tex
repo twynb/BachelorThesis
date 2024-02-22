@@ -417,18 +417,27 @@ This means that to calculate the intersection time for a static surface,
 a total of 15 additions/subtractions, 15 multiplications and 1 division is required.
 As \(n\) is always the same for a surface, it can be cached,
 reducing the cost to only 6 additions/subtractions, 9 multiplications and 1 division.
-
+\newline
 For the interpolated surface checks, calculating \(f_{0..2, a, b}\) as per \eqref{SurfaceFStart} to \eqref{SurfaceFEnd}
 alone already takes 71 additions/subtractions and 124 multiplications.
 As \(g_{0..2}\) takes 3 sets of \(f\), it thus requires 213 additions/subtractions and 372 multiplications.
 Since \(g_{0..2}\) remains the same for a pair of surface keyframes independently of the incoming ray,
 it can be cached for each keyframe pair. The same applies for \(\delta t\) and \(\delta P_1\),
 which otherwise would introduce one and three subtractions respectively.
-
+\newline
 Then calculating the surface intersection as per \eqref{SurfacePolyStart}-\eqref{SurfacePolyEnd}
 requires 14 additions/subtractions, 42 multiplications and 3 divisions,
 assuming that \(g_{0..2} \cdot v\) and \(\frac{g_{0..2} \cdot \delta P_1}{\delta t}\)
 are only calculated once each and then reused.
-
+\newline
 Additionally, this requires resolving the resulting polynomial,
 the cost of which is implementation dependent, but also rather high compared to the static check.
+As a reference, the Rust library \verb|roots| used in the proof-of-concept requires 13 additions/subtractions,
+58 multiplications and 12 divisions, plus some more complex operations in trigonometric and square/cube root functions.
+\newline
+In total, the amount of calculations, especially multiplications, to perform balloons up with this more complex method.
+As Whitted already noted in 1980~\cite{Wh80}, even in a ray tracing system with static checks,
+intersection calculations take up the vast majority of processing time (between 75-95\% in Whitted's case).
+Since this effect will only increase with more expensive intersection checks,
+the amount of intersection checks run per ray should be reduced as much as possible.
+A method for this will be created in the next chapter.
