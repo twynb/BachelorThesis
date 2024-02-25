@@ -1,6 +1,6 @@
 \chapter{Interpolating Intersection Checks}
 
-To bounce a ray through a scene, checks need to be performed to know which object the ray intersects with first and thus bounces off of.
+To bounce a ray through a scene, checks need to be performed to know which object the ray intersects with (first) and thus bounces off of.
 These checks are usually done by modelling objects using an equation that describes whether a point is on the object surface or not,
 then injecting the ray's function into that equation and resolving.
 With static objects, this check is trivial:
@@ -441,3 +441,5 @@ intersection calculations take up the vast majority of processing time (between 
 Since this effect will only increase with more expensive intersection checks,
 the amount of intersection checks run per ray should be reduced as much as possible.
 A method for this will be created in the next chapter.
+
+\section{Looping Scenes And Full Algorithm}

@@ -8,23 +8,32 @@ where neither objects within the scene nor the sound emitter nor receiver move w
 \newline
 Simulation of dynamic or moving scenes is mostly unexplored.
 This is mostly because it is only really relevant for scenarios
-where objects or receivers can move at speeds within one or two orders of magnitude from the ray's travelling speed.
+where objects or receivers can move at speeds within one or two orders of magnitude from the ray's travelling speed;
 If this condition is not fulfilled,
 the error introduced from the snapshot method described below becomes minimal enough to be disregarded.
-Since this condition does not apply to light
-(the highest speed a human has ever moved at, 39,937.7 km/h, does not come anywhere near the speed of light),
+\newline
+For light, the travelling wave relevant to computer graphics, this condition does not apply as
+light famously travels at approximately \(3 \cdot 10^{8} m/s\).
+As a reference, the fastest velocity achieved by humans is approximately \(1.1 \cdot 10^4 m/s\) during the launch of Apollo 10.
+Seeing as even this extreme case is four orders of magnitude smaller than the speed of light,
 errors introduced to computer graphics by the snapshot method are especially small.
-Only a comparatively small part of the research into ray tracing comes from outside of computer graphics,
+\newline
+Only a comparatively small part of the research into ray tracing comes from outside of computer graphics to begin with,
 and even in other fields, such as acoustics simulation,
 the error introduced by the snapshot method is only relevant in edge cases.
+All of this makes simulation of moving scenes a rather niche problem.
+\newline
 Despite this, some research into simulating moving or dynamic scenes' acoustics has been done:
+\newline
 Raghuvanshi et al.~\cite{RS10} explore a numerical approach to handle dynamically moving emitters and receivers,
 but do not look into moving objects within the scene.
+\newline
 Chandak et al.~\cite{Cha08} attempt to simulate dynamic scenes in real-time,
 with support for dynamically moving scenes but sacrificing accuracy.
 This is less exploring how to handle moving scenes
 and more exploring methods to run acoustics simulation fast enough
 to re-calculate acoustics at a similar rate to that at which objects move by significant amounts.
+\newline
 % TODO: cite EAR
 Similarly, EAR, an acoustics simulation tool based on the 3d modelling software blender,
 allows for moving scenes through blender's keyframe system,
@@ -44,11 +53,16 @@ without a need for information on how the scene will continue to move.
 This is especially helpful for real-time simulation of dynamic scenes, as data about how the scene will continue to move is not
 fully known at runtime.
 \newline
-The downside of this snapshot approach is that it tends to introduce errors when objects or receivers move at high speeds.
-% TODO visualisation
-As a simple example case, take the scene described in (IMAGE):
+\begin{figure}
+    \includegraphics[width=\linewidth]{images/snapshot_explain.jpg}
+    \caption{Difference between ray travelling distance using the newly developed interpolating method (top) as opposed to the snapshot method (bottom). In the interpolated version, the ray only travels part of the distance as the receiver travels the remainder.}
+    \label{SnapshotExplain}
+\end{figure}
+The major downside of this snapshot approach is that it tends to introduce errors when objects or receivers move at high speeds.
+As a simple example case, take the scene described in \ref{SnapshotExplain}:
 A receiver starts 343 meters away from an emitter and moves towards it at 1/9th the speed of sound, roughly 38 meters per second
 (137.2 kilometers per hour, a speed most modern cars can reach without problems).
+\newline
 Using the snapshot approach, a ray traveling directly from emitter to receiver would arrive after travelling the full 343 meters,
 taking 1 second for it to arrive at the receiver.
 In actuality, in the time the ray takes to travel the first 90\% of that distance,
@@ -71,10 +85,10 @@ An improved way of checking for intersections between rays and objects is develo
 Optimisations are evaluated and a time-based chunking method is developed to avoid needless intersection checks.
 Additionally, a method is developed to to losslessly and efficiently store the multiple impulse responses created by re-calculating
 the impulse responses for different points in time.
-The goal of this research is to simulate effects such as the situation described in (IMAGE) without errors introduced by the snapshot method
+The goal of this research is to simulate effects such as the situation described in \ref{SnapshotExplain} without errors introduced by the snapshot method
 as well as recreate the acoustics of a hypothetical, rapidly rotating room.
 Three test cases are developed for this and compared to an implementation of the snapshot method:
-An empty scene with the sound receiver approaching the sound emitter at 1/3 the speed of sound,
+An empty scene with the sound receiver approaching the sound emitter at 1/9th the speed of sound,
 a square room rapidly rotating
 and a large, L-shaped room also rapidly rotating around one of its ends, with the receiver and emitter both sitting in said end.
 \newline
