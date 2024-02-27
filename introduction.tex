@@ -53,13 +53,12 @@ without a need for information on how the scene will continue to move.
 This is especially helpful for real-time simulation of dynamic scenes, as data about how the scene will continue to move is not
 fully known at runtime.
 \newline
-\begin{figure}
+\begin{figure}\label{SnapshotExplain}
     \includegraphics[width=\linewidth]{images/snapshot_explain.jpg}
     \caption{Difference between ray travelling distance using the newly developed interpolating method (top) as opposed to the snapshot method (bottom). In the interpolated version, the ray only travels part of the distance as the receiver travels the remainder.}
-    \label{SnapshotExplain}
 \end{figure}
 The major downside of this snapshot approach is that it tends to introduce errors when objects or receivers move at high speeds.
-As a simple example case, take the scene described in \ref{SnapshotExplain}:
+As a simple example case, take the scene described in~\ref{SnapshotExplain}:
 A receiver starts 343 meters away from an emitter and moves towards it at 1/9th the speed of sound, roughly 38 meters per second
 (137.2 kilometers per hour, a speed most modern cars can reach without problems).
 \newline
@@ -85,7 +84,7 @@ An improved way of checking for intersections between rays and objects is develo
 Optimisations are evaluated and a time-based chunking method is developed to avoid needless intersection checks.
 Additionally, a method is developed to to losslessly and efficiently store the multiple impulse responses created by re-calculating
 the impulse responses for different points in time.
-The goal of this research is to simulate effects such as the situation described in \ref{SnapshotExplain} without errors introduced by the snapshot method
+The goal of this research is to simulate effects such as the situation described in~\ref{SnapshotExplain} without errors introduced by the snapshot method
 as well as recreate the acoustics of a hypothetical, rapidly rotating room.
 Three test cases are developed for this and compared to an implementation of the snapshot method:
 An empty scene with the sound receiver approaching the sound emitter at 1/9th the speed of sound,
