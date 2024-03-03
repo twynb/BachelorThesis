@@ -1,4 +1,10 @@
-\chapter{Time-Based Chunks}
+\chapter{Optimisation through spatial/temporal division}
+
+As Whitted already noted in 1980~\cite{Wh80}, even in a ray tracing system with static checks,
+intersection calculations take up the vast majority of processing time (between 75-95\% in Whitted's case).
+Since this effect will only increase with more expensive intersection checks,
+the amount of checks run per ray should be reduced as much as possible.
+A method for this will be evaluated in this chapter.
 
 \section{Chunks vs. Bounding Volumes}
 
@@ -10,13 +16,13 @@ Bounding Volume Hierarchies (BVHs), first proposed by Clarke~\cite{Cl76},
 work by enclosing each object in the scene within a volume containing it.
 This bounding volume uses a simpler geometric primitive that allows for faster intersection checks than the object itself,
 usually quadric surfaces or spheres.
-These bounding volumes are then grouped into bigger bounding volumes into a hierarchical tree structure.
+These bounding volumes are then grouped into bigger bounding volumes, forming a hierarchical tree structure.
 Rays then walk down the tree structure, checking for intersections with the corresponding bounding volumes.
 If it does not intersect with a branch's bounding volume,
 any objects within that branch can be ignored for further intersection checks.
 \newline
-Chunks, first proposed as a Three Dimensional Digital Differential Analyzer by Fujimoto and Iwata~\cite{FI85},
-instead divide a scene into separate cells (chunks),
+Another method first proposed as a Three Dimensional Digital Differential Analyzer by Fujimoto and Iwata~\cite{FI85},
+instead divides a scene into separate cells (chunks),
 with each chunk keeping a list of which objects are inside it.
 Rays can then traverse from chunk to chunk along their trajectory
 and only check for intersections with the objects contained in the chunk they're currently in.

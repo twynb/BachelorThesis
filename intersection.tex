@@ -1,4 +1,4 @@
-\chapter{Interpolating Intersection Checks}
+\chapter{Bouncing Rays Through Moving Scenes}
 
 To bounce a ray through a scene, checks need to be performed to know which object the ray intersects with (first) and thus bounces off of.
 These checks are usually done by modelling objects using an equation that describes whether a point is on the object surface or not,
@@ -7,8 +7,73 @@ With static objects, this check is trivial:
 The only parameter to resolve for is the intersection time \(t\), and said parameter only occurs in the ray function,
 usually making for a first-degree polynomial function.
 \newline
-With moving objects, this check becomes more complicated: The equation still needs to be resolved for \(t\),
-but now \(t\) is also part of the surface equation itself.
+As an example, a surface \(S\) can be modelled using a point \(P_1\) on it as well as its normal \(n\).
+Then, to tell if any point \(p\) is on \(S\), the vector from \(P_1\) to \(p\) can be compared to \(n\).
+If they're orthogonal to each other (thus their dot product is 0), \(p\) is on \(S\):
+
+\begin{equation}\label{StaticSurface}
+    (p - P_1) \cdot n = 0
+\end{equation}
+
+For a polygon defined by its corner points \(P_{1}\) to \(P_{n}\), the same equation can be used,
+with the difference that \(n\) needs to be determined from a set of at least three points.
+The cross product of two vectors is always orthogonal to both vectors, so using points \(P_{1}\) through \(P_{3}\),
+\(n\) can be determined as
+
+\begin{equation}\label{PolygonNormal}
+    n = (P_{2} - P_{1}) \times (P_{3} - P_{1})
+\end{equation}
+
+Additionally, a polygon needs to further check whether \(p\) is actually inside the bounds defined by its corners.
+For triangles, this can be done using barycentric coordinates.
+\newline
+Barycentric coordinates describe a point on a triangle (or another simplex) by separating a triangle into three parts,
+each with the given point and two corners of the triangle as its vertices.
+Each coordinate then describes the relative size of that triangle with respect to the full triangle.
+% TODO image
+\newline
+Thus, each point inside the triangle can be described by coordinates \((\alpha, \beta, \gamma)\),
+with \(0 \le \alpha \le 1\), \(0 \le \beta \le 1\), \(0 \le \gamma \le 1\) and \(\alpha + \beta + \gamma = 1\).
+If these conditions do not apply to \(p\), it is outside the triangle.
+\newline
+The naive way to calculate barycentric coordinates would be to calculate the areas of \(P_1P_2p\), \(P_1P_3p\), \(P_2P_3p\) and
+divide them by the area of \(P_1P_2P_3\)~\cite{SM09}:
+\begin{verbatim}
+    normal = cross((p3 - p1), (p2 - p1));
+    p1p2p = dot(normal, cross((p1 - p), (p2 - p)));
+    p1p3p = dot(normal, cross((p3 - p), (p1 - p)));
+    p2p3p = dot(normal, cross((p2 - p), (p3 - p)));
+    p1p2p3 = p1p2p + p1p3p + p2p3p;
+    alpha = p2p3p / p1p2p3;
+    beta = p1p3p / p1p2p3;
+    gamma = p1p2p / p1p2p3;
+\end{verbatim}
+This can be simplified by only computing two of the barycentric coordinates
+and calculating the last one from the first two instead; if \(\alpha\) and \(\beta\) have already been computed,
+\(\gamma = 1 - \alpha - \beta\). This removes several operations from the calculations.
+For further optimisation, the Lagrange identity \((a \times b) \cdot (c \times d) = (a \cdot c)(b \cdot d) - (a \cdot d)(b \cdot c)\)
+can be used to replace the cross products with dot products, as shown by Ericson~\cite{Er04}.
+\newline
+In order to calculate the intersection point \(p\), the equation describing a ray then needs to be injected into the surface equation.
+A ray \(R\)'s position at time \(t\), with \(R\) starting at the point \(P\) at time \(t_0\)
+and travelling in the direction \(v\) can be defined as follows:
+
+\begin{equation}\label{RayEq}
+    R(t) = P + (t - t_0) \cdot v
+\end{equation}
+
+This equation can then be injected into the equation describing the primitive and resolved.
+As an example, using~\eqref{StaticSurface}, this calculation goes as follows:
+
+\begin{equation*}
+    (P + (t - t_0) \cdot v - P_1) \cdot n = 0
+\end{equation*}
+\begin{equation}\label{StaticSurfaceIntersect}
+    t = \frac{(P_1 + t_0 \cdot v - P) \cdot n}{v \cdot n}
+\end{equation}
+
+With moving objects, the intersection check becomes more complicated: The initial equation still needs to be resolved for \(t\),
+but now \(t\) is also part of the equation describing the object itself.
 In this chapter, equations are established and solved to perform intersection checks with moving spheres and surfaces,
 as those two should already be sufficient to simulate most scenes.
 Resolution for other primitives, such as quadric surfaces, should be derivable using a similar method.
@@ -16,26 +81,23 @@ Resolution for other primitives, such as quadric surfaces, should be derivable u
 The general scheme for this is as follows:
 First, the object is modelled in a way where its position (or other parameters) is also a function of \(t\).
 Then, like with a normal check, the function modelling the ray is injected into this equation,
-then resolved. This will, in the examples below, result in a polynomial function of a higher degree
+then resolved.
+This will, in the examples below, result in a polynomial function of a higher degree
 (2nd and 3rd for spheres and surfaces, respectively), which can then be resolved.
-Note that since the resulting polynomial will be of at least 2nd degree, it can have multiple roots.
-Only roots that take place after the ray's starting time are relevant.
-Different primitives might also require different checks to filter out invalid roots depending on how they are modelled,
-the relevant checks for spheres and surfaces will be described below.
-Of the remaining roots, the first one represents the actual intersection time, the remaining ones can be discarded.
 \newline
-A ray \(R\)'s position at time \(t\), with \(R\) starting at the point \(P\) at time \(t_0\) and travelling in the direction \(v\) can be defined as follows:
-
-\begin{equation}\label{RayEq}
-    R(t) = P + (t - t_0) \cdot v
-\end{equation}
-
-Note that unlike with most ray tracing implementations, the magnitude of the direction vector \(v\) is significant:
+Unlike with most ray tracing implementations, the magnitude of the ray's direction vector \(v\) becomes significant:
 Since the movement of objects checked for intersections is also dependent on time,
 objects and the ray must move at the same time scale.
 \(v\) must accordingly be scaled to fit the velocity of the ray and the implementation's scale for \(t\) and coordinates.
 Otherwise, the intersection calculation will yield incorrect results as at the resulting intersection times,
 the ray will either not have travelled to the resulting intersection point yet or will have already surpassed it.
+\newline
+Note that since the resulting polynomial will be of at least 2nd degree, it can have multiple roots.
+Only roots greater than \(t_0\) are relevant as others would represent intersections from before the ray is even launched.
+Different primitives might also require different checks to filter out invalid roots depending on how they are modelled,
+such as the check for whether a point is inside a triangle described above.
+Of the remaining roots, the first one represents the actual intersection time,
+the remaining ones can be discarded as they'd only take place if the ray didn't bounce off the first intersection already.
 
 \section{Intersection Checks for Spheres}
 
@@ -53,17 +115,17 @@ With \(m\) representing the interpolation point between the two keyframes.
 For the scope of this thesis, linear interpolation is used, leading to \(m\) being defined as
 
 \begin{equation}\label{MDef}
-    m = \frac{t_{k_2} - t}{\delta t}
+    m = \frac{t_{k_2} - t}{\Delta t}
 \end{equation}
 
 with
 
 \begin{equation}
-    \delta t = t_{k_2} - t_{k_1}
+    \Delta t = t_{k_2} - t_{k_1}
 \end{equation}
 
 For non-linear interpolation modes between two keyframes (such as using a sinusoidal function),
-\(m\) is defined differently. The math below is still the same until \eqref{SphereBeforeM} where \(m\) is resolved,
+\(m\) is defined differently. The math below is still the same until~\eqref{SphereBeforeM} where \(m\) is resolved,
 at which point the new definition of \(m\) must be substituted instead of the definition above.
 Resolving from there should be trivial, depending on the definition of \(m\).
 \newline
@@ -79,7 +141,7 @@ For any given time \(t\), the surface of \(C\) is then defined as all points \(x
     \|x-c_t\|^2 = r^2
 \end{equation}
 
-Inserting \eqref{RayEq} in place of \(x\) in \eqref{SphereDef}:
+Injecting the ray equation~\eqref{RayEq} in place of \(x\) in~\eqref{SphereDef} and resolving the squared norm to a dot product:
 
 \begin{equation}
     \|P + (t - t_0) \cdot v - c_t\|^2 = r^2
@@ -89,7 +151,9 @@ Inserting \eqref{RayEq} in place of \(x\) in \eqref{SphereDef}:
     (P - c_{k_2} + t \cdot v - t_0 \cdot v + m \cdot (c_{k_2} - c_{k_1})) \cdot (P - c_{k_2} + t \cdot v - t_0 \cdot v + m \cdot (c_{k_2} - c_{k_1})) = r^2
 \end{equation*}
 
-Resolving this and defining \(\delta c = c_{k_2} - c_{k_1}\) results in a function of \(t\) and \(m\):
+As vector addition inside dot products is distributive (i.e.\ \((a + b) \cdot c = a \cdot c + b \cdot c\)),
+this dot product can be resolved into a sum of several simple dot products.
+Defining \(\Delta c = c_{k_2} - c_{k_1}\) for simplicity, this results in a function of \(t\) and \(m\):
 
 \begin{equation}\label{SphereBeforeM}
     \begin{split}
@@ -100,18 +164,18 @@ Resolving this and defining \(\delta c = c_{k_2} - c_{k_1}\) results in a functi
         - r^2
         \\
         + t \cdot 2 \cdot (P \cdot v - c_{k_2} \cdot v - t_0 \cdot \|v\|^2)
-        + m \cdot 2 \cdot (P \cdot \delta c - c_{k_2} \cdot \delta c - t_0 \cdot v \cdot \delta c)
+        + m \cdot 2 \cdot (P \cdot \Delta c - c_{k_2} \cdot \Delta c - t_0 \cdot v \cdot \Delta c)
         \\
-        + t \cdot m \cdot 2 \cdot v \cdot \delta c
+        + t \cdot m \cdot 2 \cdot v \cdot \Delta c
         + t^2 \cdot \|v\|^2
-        + m^2 \cdot \|\delta c\|^2
+        + m^2 \cdot \|\Delta c\|^2
         \\
         = 0
     \end{split}
 \end{equation}
 
 Now, to get a polynomial function of \(t\), \(m\) needs to be resolved.
-With the linear definition of \(m\) from above, this results in the following equation:
+Injecting the linear definition of \(m\) from~\eqref{MDef}, this results in the following equation:
 
 \begin{equation*}
     \begin{split}
@@ -123,18 +187,18 @@ With the linear definition of \(m\) from above, this results in the following eq
         \\
         + t \cdot 2 \cdot (P \cdot v - c_{k_2} \cdot v - t_0 \cdot \|v\|^2)
         + \frac{(t_{k_2} - t) \cdot
-            2 \cdot (P \cdot \delta c - c_{k_2} \cdot \delta c - t_0 \cdot v \cdot \delta c)
-        }{\delta t}
+            2 \cdot (P \cdot \Delta c - c_{k_2} \cdot \Delta c - t_0 \cdot v \cdot \Delta c)
+        }{\Delta t}
         \\
-        + \frac{t \cdot (t_{k_2} - t) \cdot 2 \cdot v \cdot \delta c}{\delta t}
+        + \frac{t \cdot (t_{k_2} - t) \cdot 2 \cdot v \cdot \Delta c}{\Delta t}
         + t^2 \cdot \|v\|^2
-        + \frac{(t_{k_2} - t)^2 \cdot \|\delta c\|^2}{\delta t^2}
+        + \frac{(t_{k_2} - t)^2 \cdot \|\Delta c\|^2}{\Delta t^2}
         \\
         = 0
     \end{split}
 \end{equation*}
 
-This resolves to a 2nd degree polynomial:
+Resolving this using binomials and grouping parts with the same degree results in a 2nd degree polynomial
 
 \begin{equation}
     d_2t^2 + d_1t + t_0 = 0
@@ -143,17 +207,17 @@ This resolves to a 2nd degree polynomial:
 with
 
 \begin{equation}
-    d_2 = \|v\|^2 \cdot \delta t^2
-    + \|\delta c\|^2
-    - 2 \cdot v \cdot \delta c \cdot \delta t
+    d_2 = \|v\|^2 \cdot \Delta t^2
+    + \|\Delta c\|^2
+    - 2 \cdot v \cdot \Delta c \cdot \Delta t
 \end{equation}
 \begin{equation}
     d_1 = 2 \cdot (
-    (P - c_{k_2}) \cdot v \cdot \delta t^2
+    (P - c_{k_2}) \cdot v \cdot \Delta t^2
     - t_0 \cdot \|v\|^2
-    - (P - c_{k_2} - t_0 \cdot v) \cdot \delta c \cdot \delta t
-    + t_{k_2} \cdot v \cdot \delta c \cdot \delta t
-    - t_{k_2} \cdot \|\delta c\|^2
+    - (P - c_{k_2} - t_0 \cdot v) \cdot \Delta c \cdot \Delta t
+    + t_{k_2} \cdot v \cdot \Delta c \cdot \Delta t
+    - t_{k_2} \cdot \|\Delta c\|^2
     )
 \end{equation}
 \begin{equation}
@@ -162,15 +226,15 @@ with
         \|P - c_{k_2}\|^2
         + 2 \cdot t_0 \cdot (c_{k_2} - P) \cdot v
         + t_0^2 \cdot \|v\|^2
-        ) \cdot \delta t^2
+        ) \cdot \Delta t^2
         \\
-        + t_{k_2} \cdot 2 \cdot (P - c_{k_2} - t_0 \cdot v) \cdot dc \cdot \delta t
+        + t_{k_2} \cdot 2 \cdot (P - c_{k_2} - t_0 \cdot v) \cdot dc \cdot \Delta t
         + t_{k_2}^2 \cdot \|dc\|^2
-        - r^2 \cdot \delta t^2
+        - r^2 \cdot \Delta t^2
     \end{split}
 \end{equation}
 
-If \(r\) can also be varied between keyframes,
+If \(r\) also needs to be varied between keyframes,
 replace \(r^2\) with the according interpolated value \((m - r_{k_1} + (1-m) r_{k_2})^2\) and resolve accordingly.
 \newline
 The real roots of this equation represent all times at which the sphere and ray would theoretically intersect.
@@ -191,7 +255,7 @@ Similarly to spheres, a polygonal surface \(S\) can also be modelled using a set
 each with points \(P_{1..o, k_n}\) for the corners of the surface, with \(o \ge 3\) and \(o\) being consistent between keyframes.
 As with spheres, intersection calculations need to be run separately for each set of consecutive keyframes \(k_1\) and \(k_2\).
 \newline
-Using \(m\) from \eqref{MDef} with the same caveats, each point \(P_{n, t}\) is calculated as
+Using \(m\) from~\eqref{MDef} with the same caveats, each point \(P_{n, t}\) is calculated as
 
 \begin{equation}\label{SurfacePointDef}
     P_{n, t} = m \cdot P_{n, k_1} + (1 - m) \cdot P_{n, k_2}, 1 \le n \le o
@@ -204,20 +268,23 @@ the surface containing the polygon at any given time \(t\) can be described as t
     (x - P_{1, t}) \cdot ((P_{2, t} - P_{1, t}) \times (P_{3, t} - P_{1, t})) = 0
 \end{equation}
 
-Injecting \eqref{RayEq} into \eqref{SurfaceDef}:
+Injecting~\eqref{RayEq} into~\eqref{SurfaceDef}:
 
 \begin{equation}
     (P + t \cdot v - t_0 \cdot v - P_{1, t}) \cdot ((P_{2, t} - P_{1, t}) \times (P_{3, t} - P_{1, t})) = 0
 \end{equation}
 
-Exploiting that the vector cross product is distributive over addition (i.e. \( (x + y) \times z = x \times z + y \times z\)):
+The vector cross product is distributive over addition (i.e.\ \( (x + y) \times z = x \times z + y \times z\)),
+which can be used to split up the big cross product into several smaller cross products:
 
 \begin{equation*}
     (P + t \cdot v - t_0 \cdot v - P_{1, t}) \cdot
     (P_{2, t} \times P_{3, t} - P_{2, t} \times P_{1, t} - P_{1, t} \times P_{3, t} + P_{1, t} \times P_{1, t})
 \end{equation*}
 
-As the cross product of a vector with itself is always 0, the last part can be discarded:
+The cross product of a vector with itself is always a vector of zeroes,
+which in turn is the identity element for addition (i.e.\ adding it to another vector just results in the other vector),
+thus the last of these four cross products \(P_{1, t} \times P_{1, t}\) can be discarded:
 
 \begin{equation}\label{SurfaceBeforeCross}
     (P + t \cdot v - t_0 \cdot v - P_{1, t}) \cdot
@@ -225,7 +292,7 @@ As the cross product of a vector with itself is always 0, the last part can be d
 \end{equation}
 
 Each of these cross products should be solved individually before resolving the full equation.
-Using \eqref{SurfacePointDef}:
+Using~\eqref{SurfacePointDef} to describe a cross product between two generic points \(P_{a, t}\) and \(P_{b, t}\):
 
 \begin{equation}
     P_{a, t} \times P_{b, t}
@@ -254,7 +321,7 @@ Again exploiting that the cross product is distributive over addition, as well a
     \end{split}
 \end{equation}
 
-As with \eqref{SphereBeforeM}, to get a function of \(t\),
+As with~\eqref{SphereBeforeM}, to get a function of \(t\),
 \(m\) needs to replaced with its definition (\eqref{MDef} in this case):
 
 \begin{multline*}
@@ -265,17 +332,17 @@ As with \eqref{SphereBeforeM}, to get a function of \(t\),
         - 2 (P_{a, k_2} \times P_{b, k_2})
         + (P_{a, k_1} \times P_{b, k_2})
         + (P_{a, k_2} \times P_{b, k_1})
-        )}{\delta t}
+        )}{\Delta t}
     \\
     + \frac{(t_{k_2} - t)^2 \cdot (
         (P_{a, k_2} \times P_{b, k_2})
         - (P_{a, k_1} \times P_{b, k_2})
         - (P_{a, k_2} \times P_{b, k_1})
         + (P_{a, k_1} \times P_{b, k_1})
-        )}{\delta t^2}
+        )}{\Delta t^2}
 \end{multline*}
 
-This can be resolved to a second-degree polynomial:
+This can be resolved to a second-degree polynomial
 
 \begin{equation}\label{SurfaceCrossPoly}
     P_{a, t} \times P_{b, t} = f_{2, a, b}t^2 + f_{1, a, b}t + f_{0, a, b}
@@ -291,7 +358,7 @@ with
 \end{equation}
 \begin{equation}
     \begin{split}
-        f_{1, a, b} = - \delta t \cdot (
+        f_{1, a, b} = - \Delta t \cdot (
         - 2 (P_{a, k_2} \times P_{b, k_2})
         + (P_{a, k_1} \times P_{b, k_2})
         + (P_{a, k_2} \times P_{b, k_1})
@@ -307,9 +374,9 @@ with
 \end{equation}
 \begin{equation}\label{SurfaceFEnd}
     \begin{split}
-        f_{0, a, b} = \delta t^2 \cdot (P_{a, k_2} \times P_{b, k_2})
+        f_{0, a, b} = \Delta t^2 \cdot (P_{a, k_2} \times P_{b, k_2})
         \\
-        + t_{k_2} \cdot \delta t \cdot (
+        + t_{k_2} \cdot \Delta t \cdot (
         - 2 (P_{a, k_2} \times P_{b, k_2})
         + (P_{a, k_1} \times P_{b, k_2})
         + (P_{a, k_2} \times P_{b, k_1})
@@ -324,7 +391,7 @@ with
     \end{split}
 \end{equation}
 
-Inserting \eqref{SurfaceCrossPoly} into \eqref{SurfaceBeforeCross}:
+Inserting~\eqref{SurfaceCrossPoly} into~\eqref{SurfaceBeforeCross}:
 
 \begin{equation*}
     (P + t \cdot v - t_0 \cdot v - P_{1, t}) \cdot
@@ -332,11 +399,17 @@ Inserting \eqref{SurfaceCrossPoly} into \eqref{SurfaceBeforeCross}:
     = 0
 \end{equation*}
 
-Introducing \(g_n = f_{n, 2, 3} - f_{n, 2, 1} - f_{n, 1, 3}\) for readability,
-resolving \(P_{1, t}\) as per \eqref{SurfacePointDef} and introducing \(\delta P_1 = P_{1, k_2} - P_{1, k-1}\):
+Injecting~\eqref{SurfacePointDef} for \(P_{1, t}\) and
+introducing \(g_n = f_{n, 2, 3} - f_{n, 2, 1} - f_{n, 1, 3}\)
+and \(\Delta P_1 = P_{1, k_2} - P_{1, k-1}\) for readability
+results in this equation:
 
 \begin{equation}
-    (P + t \cdot v - t_0 \cdot v - P_{1, k_2} + \frac{t_{k_2} \delta P_1}{\delta t} - \frac{t \cdot \delta P_1}{\delta t}) \cdot
+    (
+    P + t \cdot v - t_0 \cdot v - P_{1, k_2}
+    + \frac{t_{k_2} \Delta P_1}{\Delta t}
+    - \frac{t \cdot \Delta P_1}{\Delta t}
+    ) \cdot
     (
     t^2 g_2
     + t g_1
@@ -345,7 +418,7 @@ resolving \(P_{1, t}\) as per \eqref{SurfacePointDef} and introducing \(\delta P
     = 0
 \end{equation}
 
-This can be resolved to a third degree polynomial:
+Again using the fact that vector dot products are distributive over addition, this can be resolved to a third degree polynomial
 
 \begin{equation}\label{SurfacePolyStart}
     t^3d_3 + t^2d_2 + td_1 + d_0 = 0
@@ -355,29 +428,29 @@ With
 
 \begin{equation}
     d_3 = g_2 \cdot v
-    - \frac{g_2 \cdot \delta P_1}{\delta t}
+    - \frac{g_2 \cdot \Delta P_1}{\Delta t}
 \end{equation}
 \begin{equation}
     d_2 = g_2 \cdot P
     - t_0 \cdot g_2 \cdot v
     - g_2 \cdot P_{1, k_2}
-    + \frac{t_{k_2} \cdot g_2 \cdot \delta P_1}{\delta t}
+    + \frac{t_{k_2} \cdot g_2 \cdot \Delta P_1}{\Delta t}
     + g_1 \cdot v
-    - \frac{g_1 \cdot \delta P_1}{\delta t}
+    - \frac{g_1 \cdot \Delta P_1}{\Delta t}
 \end{equation}
 \begin{equation}
     d_1 = g_1 \cdot P
     - t_0 \cdot g_1 \cdot v
     - g_1 \cdot P_{1, k_2}
-    + \frac{t_{k_2} \cdot g_1 \cdot \delta P_1}{\delta t}
+    + \frac{t_{k_2} \cdot g_1 \cdot \Delta P_1}{\Delta t}
     + g_0 \cdot v
-    - \frac{g_0 \cdot \delta P_1}{\delta t}
+    - \frac{g_0 \cdot \Delta P_1}{\Delta t}
 \end{equation}
 \begin{equation}\label{SurfacePolyEnd}
     d_0 = g_0 \cdot P
     - t_0 \cdot g_0 \cdot v
     - g_0 \cdot P_{1, k_2}
-    + \frac{t_{k_2} \cdot g_0 \cdot \delta P_1}{\delta t}
+    + \frac{t_{k_2} \cdot g_0 \cdot \Delta P_1}{\Delta t}
 \end{equation}
 
 This polynomial can then be solved using a general cubic formula such as the one described by Abramowitz and Stegun~\cite{AS48}
@@ -389,8 +462,7 @@ must be discarded as explained above.
 \newline
 For the remaining roots, another check needs to be done
 for whether the intersection point \(R(t)\) is actually inside the polygon, and not just on the same surface.
-With triangles, this can be trivially done by calculating the homogenous barycentric coordinates \(\alpha, \beta, \gamma\) of \(R(t)\) for \(S\)
-and verifying that \(0 \le \alpha \le 1, 0 \le \beta \le 1, 0 \le \gamma \le 1, \alpha + \beta + \gamma = 1\).
+With triangles, this can be trivially done using the barycentric coordinates as described above.
 \newline
 The root with the lowest value that satisfies the above conditions again represents the time where the ray and polygon intersect,
 assuming there is no intersection happening before. If no root satisfies these conditions, no intersection happens.
@@ -398,19 +470,9 @@ assuming there is no intersection happening before. If no root satisfies these c
 \section{Computational Cost}
 
 To gauge the additional computation cost for interpolated intersection checks as opposed to static ones,
-consider the analytical solution for static surface intersection calculations,
-derivation of which (for the ray defined in \eqref{RayEq} and a surface with at least 3 points \(P_{1..3}\)) is trivial:
-
-\begin{equation}
-    t = \frac{(P_1 + t_0 \cdot v - P) \cdot n}{v \cdot n}
-\end{equation}
-
-with
-
-\begin{equation}
-    n = (P_3 - P_1) \times (P_2 - P_1)
-\end{equation}
-
+consider the analytical solution for static surface intersection calculations as described in~\eqref{StaticSurfaceIntersect}
+and using~\eqref{PolygonNormal}.
+\newline
 Naively calculating a cross product requires 6 multiplications and 3 subtractions.
 The dot product requires just 3 multiplications, as does multiplying a scalar onto a coordinate vector.
 This means that to calculate the intersection time for a static surface,
@@ -418,28 +480,24 @@ a total of 15 additions/subtractions, 15 multiplications and 1 division is requi
 As \(n\) is always the same for a surface, it can be cached,
 reducing the cost to only 6 additions/subtractions, 9 multiplications and 1 division.
 \newline
-For the interpolated surface checks, calculating \(f_{0..2, a, b}\) as per \eqref{SurfaceFStart} to \eqref{SurfaceFEnd}
+For the interpolated surface checks, calculating \(f_{0..2, a, b}\) as per~\eqref{SurfaceFStart} to~\eqref{SurfaceFEnd}
 alone already takes 71 additions/subtractions and 124 multiplications.
 As \(g_{0..2}\) takes 3 sets of \(f\), it thus requires 213 additions/subtractions and 372 multiplications.
 Since \(g_{0..2}\) remains the same for a pair of surface keyframes independently of the incoming ray,
-it can be cached for each keyframe pair. The same applies for \(\delta t\) and \(\delta P_1\),
+it can be cached for each keyframe pair. The same applies for \(\Delta t\) and \(\Delta P_1\),
 which otherwise would introduce one and three subtractions respectively.
 \newline
-Then calculating the surface intersection as per \eqref{SurfacePolyStart}-\eqref{SurfacePolyEnd}
+Then calculating the surface intersection as per~\eqref{SurfacePolyStart}-\eqref{SurfacePolyEnd}
 requires 14 additions/subtractions, 42 multiplications and 3 divisions,
-assuming that \(g_{0..2} \cdot v\) and \(\frac{g_{0..2} \cdot \delta P_1}{\delta t}\)
+assuming that \(g_{0..2} \cdot v\) and \(\frac{g_{0..2} \cdot \Delta P_1}{\Delta t}\)
 are only calculated once each and then reused.
 \newline
 Additionally, this requires resolving the resulting polynomial,
 the cost of which is implementation dependent, but also rather high compared to the static check.
-As a reference, the Rust library \verb|roots| used in the proof-of-concept requires 13 additions/subtractions,
-58 multiplications and 12 divisions, plus some more complex operations in trigonometric and square/cube root functions.
+As a reference, in the worst case of none of the polynomial's factors being 0,
+the Rust library \verb|roots| (as of version 0.0.8) used in the proof-of-concept, requires 13 additions/subtractions,
+58 multiplications and 12 divisions, plus trigonometric and square/cube root functions, the computation cost of which
+depends on the CPU architecture and cannot be reduced to a number of simple operations.
 \newline
 In total, the amount of calculations, especially multiplications, to perform balloons up with this more complex method.
-As Whitted already noted in 1980~\cite{Wh80}, even in a ray tracing system with static checks,
-intersection calculations take up the vast majority of processing time (between 75-95\% in Whitted's case).
-Since this effect will only increase with more expensive intersection checks,
-the amount of intersection checks run per ray should be reduced as much as possible.
-A method for this will be created in the next chapter.
-
 \section{Looping Scenes And Full Algorithm}
