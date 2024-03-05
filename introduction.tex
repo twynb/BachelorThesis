@@ -10,21 +10,21 @@ Several methods have been developed that allow an engineer to simulate the sound
 letting them check whether the acoustics hold up to their intended requirements.
 \newline
 The two most common methods of simulation are numeric and geometric approaches.
-Numeric approaches work by solving the wave equation for the room numerically.
+Numeric approaches work by getting the equation representing the wave's propagation in the room,
+then calculating a solution to it numerically.
 This leads to the most accurate results, but has a high computation cost attached to it,
 making it less viable for real-world uses.
 \newline
-Geometric methods instead model a sound wave as a large set of rays
-and simulate them bouncing through the room,
-similarly to how light is modelled in graphical ray tracers.
+Geometric methods instead model a sound wave as a large set of individual rays originating from the same spot,
+then simulate them bouncing through the room,
+similarly to how light is modelled in graphics ray tracers.
 This works fine for sounds at small wave lengths/high frequencies,
 but introduces errors for lower frequencies as a sound's wave properties are entirely discarded.
 In turn, geometric methods are much faster than numeric approaches,
 to a point where a room's acoustics can be simulated in real time~\cite{Cha08}.
-% TODO cite
-Most commercially available acoustics simulation tools use ray tracing or similar geometric methods.
+At time of writing, most commercially available acoustics simulation tools use ray tracing or similar geometric methods~\cite{Th17}.
 \newline
-These methods can of course also be used to simulate entirely hypothetical rooms without any intent to build them,
+Both of these methods can of course also be used to simulate entirely hypothetical rooms without any intent to build them,
 or rooms that can't exist in the real world to begin with,
 which can help physicists study properties of these theoretical places that can then be applied to real ones.
 \newline
@@ -43,8 +43,9 @@ but their approach is not viable for a full room acoustics simulation.
 \newline
 Existing simulations have only concerned themselves with static scenes.
 % TODO cite EAR
-For dynamic scenes, existing tools such as EAR work around having to account for movement by
-taking a static version of the scene at a given time and bouncing rays through that instead,
+For dynamic scenes, existing tools such as EAR and research such as that by Chandak et al.~\cite{Cha08}
+work around having to account for movement by taking a static version of the scene at a given time
+and bouncing rays through that instead,
 then repeating this process for every point in time at which acoustics are simulated.
 \newline
 This works well in most cases, but leads to problems when objects in the room move fast enough
