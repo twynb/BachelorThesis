@@ -1,6 +1,6 @@
 \chapter{Bouncing Rays Through Moving Scenes}
 
-To bounce a ray through a scene, checks need to be performed to know which object the ray intersects with (first) and thus bounces off of.
+To bounce a ray through a scene, checks need to be performed to know which objects it intersects with and thus bounces off of.
 These checks are usually done by modelling objects using an equation that describes whether a point is on the object surface or not,
 then injecting the ray's function into that equation and resolving.
 With static objects, this check is trivial:
@@ -16,7 +16,7 @@ If they're orthogonal to each other (thus their dot product is 0), \(p\) is on \
 \end{equation}
 
 For a polygon defined by its corner points \(P_{1}\) to \(P_{n}\), the same equation can be used,
-with the difference that \(n\) needs to be determined from a set of at least three points.
+with the difference that \(n\) needs to be determined from a set of at least three of the points.
 The cross product of two vectors is always orthogonal to both vectors, so using points \(P_{1}\) through \(P_{3}\),
 \(n\) can be determined as
 
@@ -30,7 +30,7 @@ For triangles, this can be done using barycentric coordinates.
 Barycentric coordinates describe a point on a triangle (or another simplex) by separating a triangle into three parts,
 each with the given point and two corners of the triangle as its vertices.
 Each coordinate then describes the relative size of that triangle with respect to the full triangle.
-% TODO image
+% TODO barycentric coords image
 \newline
 Thus, each point inside the triangle can be described by coordinates \((\alpha, \beta, \gamma)\),
 with \(0 \le \alpha \le 1\), \(0 \le \beta \le 1\), \(0 \le \gamma \le 1\) and \(\alpha + \beta + \gamma = 1\).
@@ -50,7 +50,7 @@ divide them by the area of \(P_1P_2P_3\)~\cite{SM09}:
 \end{verbatim}
 This can be simplified by only computing two of the barycentric coordinates
 and calculating the last one from the first two instead; if \(\alpha\) and \(\beta\) have already been computed,
-\(\gamma = 1 - \alpha - \beta\). This removes several operations from the calculations.
+\(\gamma = 1 - \alpha - \beta\). This saves a division operation.
 For further optimisation, the Lagrange identity \((a \times b) \cdot (c \times d) = (a \cdot c)(b \cdot d) - (a \cdot d)(b \cdot c)\)
 can be used to replace the cross products with dot products, as shown by Ericson~\cite{Er04}.
 \newline
@@ -72,8 +72,40 @@ As an example, using~\eqref{StaticSurface}, this calculation goes as follows:
     t = \frac{(P_1 + t_0 \cdot v - P) \cdot n}{v \cdot n}
 \end{equation}
 
-With moving objects, the intersection check becomes more complicated: The initial equation still needs to be resolved for \(t\),
-but now \(t\) is also part of the equation describing the object itself.
+If \(t\) exists and is greater than \(t_0\),
+the point \(p = R(t)\) describes the intersection point and can be used for further checks
+as well as bouncing.
+\newline
+Existing tools use this same method for intersection checks when simulating dynamic or moving scenes.
+A snapshot copy of the scene at the time a ray is launched is made,
+then intersection checks and bouncing logic use this static scene.
+This approach to moving scenes will be called the Snapshot approach.
+\newline
+This snapshot approach comes with a few advantages:
+The simple and well-optimised intersection logic from static scenes can be used without changes.
+Also, crucially, knowledge of how the scene will move over the time the ray spends bouncing around it is not required.
+All data necessary to simulate the bouncing is available at the time the ray is emitted,
+without a need for information on how the scene will continue to move.
+This is especially helpful for real-time simulation of dynamic scenes, as data about how the scene will continue to move is not
+fully known at runtime.
+\newline
+\begin{figure}\label{SnapshotExplain}
+    \includegraphics[width=\linewidth]{images/snapshot_explain.jpg}
+    \caption{Difference between ray travelling distance using the newly developed interpolating method (top) as opposed to the snapshot method (bottom). In the interpolated version, the ray only travels part of the distance as the receiver travels the remainder.}
+\end{figure}
+The major downside of this snapshot approach is that it tends to introduce errors when objects or receivers move at high speeds.
+As a simple example case, take the scene described in~\ref{SnapshotExplain}:
+A receiver starts 343 meters away from an emitter and moves towards it at 1/9th the speed of sound, roughly 38 meters per second
+(137.2 kilometers per hour, a speed most modern cars can reach without problems).
+\newline
+Using the snapshot approach, a ray traveling directly from emitter to receiver would arrive after travelling the full 343 meters,
+taking 1 second for it to arrive at the receiver.
+In actuality, in the time the ray takes to travel the first 90\% of that distance,
+the receiver has already travelled the remaining 10\%, making for a response time of 0.9 seconds rather than 1 second.
+\newline
+To avoid this issue, new intersection logic that takes objects' movements into account is needed.
+This check becomes more complicated than its static counterpart as the equation describing the object still needs to be resolved for \(t\),
+but now \(t\) is also part of the equation itself.
 In this chapter, equations are established and solved to perform intersection checks with moving spheres and surfaces,
 as those two should already be sufficient to simulate most scenes.
 Resolution for other primitives, such as quadric surfaces, should be derivable using a similar method.
@@ -104,14 +136,16 @@ the remaining ones can be discarded as they'd only take place if the ray didn't 
 A sphere \(C\) is modelled as having a radius \(r\) and a collection of keyframes \(k_n\), each with a center point \(c_{k_n}\) and a time \(t_{k_n}\).
 Intersection calculations need to be run separately for each set of consecutive keyframes \(k_1\) and \(k_2\).
 \newline
-
-The center point \(c_t\) of \(C\) at time \(t\) can be defined as
+% TODO image
+The center point \(c_t\) of \(C\) at time \(t\) can be defined
+as a blend between the two keyframes' center points \(c_{k_1}\) and \(c_{k_2}\):
 
 \begin{equation}
     c_t = m \cdot c_{k_1} + (1-m) \cdot c_{k_2}
 \end{equation}
 
-With \(m\) representing the interpolation point between the two keyframes.
+\(m\) represents the proportion of \(c_{k_1}\) as opposed to \(c_{k_2}\) at a given time.
+The definition of \(m\) depends on the interpolation mode.
 For the scope of this thesis, linear interpolation is used, leading to \(m\) being defined as
 
 \begin{equation}\label{MDef}
@@ -135,24 +169,33 @@ and the scope of which set of keyframes applies to which range of \(t\) would ne
 Exploring this is outside the scope of this thesis.
 \newline
 
-For any given time \(t\), the surface of \(C\) is then defined as all points \(x\) for which
+For any given time \(t\),
+the surface of \(C\) is then defined as all points \(p\) where the distance to \(c_t\) is the sphere's radius:
 
 \begin{equation}\label{SphereDef}
-    \|x-c_t\|^2 = r^2
+    \|p-c_t\|^2 = r^2
 \end{equation}
 
-Injecting the ray equation~\eqref{RayEq} in place of \(x\) in~\eqref{SphereDef} and resolving the squared norm to a dot product:
+Injecting the ray equation~\eqref{RayEq} in place of \(p\) in~\eqref{SphereDef}:
 
 \begin{equation}
     \|P + (t - t_0) \cdot v - c_t\|^2 = r^2
 \end{equation}
+
+The squared norm of a vector can be replaced with its dot product with itself (\(\|v\|^2 = v \cdot v \)).
+This will allow for the equation to be resolved into a sum of multiple dot products.
 
 \begin{equation*}
     (P - c_{k_2} + t \cdot v - t_0 \cdot v + m \cdot (c_{k_2} - c_{k_1})) \cdot (P - c_{k_2} + t \cdot v - t_0 \cdot v + m \cdot (c_{k_2} - c_{k_1})) = r^2
 \end{equation*}
 
 As vector addition inside dot products is distributive (i.e.\ \((a + b) \cdot c = a \cdot c + b \cdot c\)),
-this dot product can be resolved into a sum of several simple dot products.
+this dot product can be resolved into a sum of several dot products,
+the factors of which don't require further calculations.
+In order to get the equation's shape closer to that of a polynomial,
+the fact that scalar multiplication is distributive over addition can be used
+to factor out \(t\) and \(m\) from each summand,
+then group factors that involve the \(t\) and \(m\) to the same degree.
 Defining \(\Delta c = c_{k_2} - c_{k_1}\) for simplicity, this results in a function of \(t\) and \(m\):
 
 \begin{equation}\label{SphereBeforeM}
@@ -175,7 +218,9 @@ Defining \(\Delta c = c_{k_2} - c_{k_1}\) for simplicity, this results in a func
 \end{equation}
 
 Now, to get a polynomial function of \(t\), \(m\) needs to be resolved.
-Injecting the linear definition of \(m\) from~\eqref{MDef}, this results in the following equation:
+The equation for variations of this logic that use different interpolation modes will diverge from here on out,
+but should be trivially solvable depending on the definition of \(m\).
+Replacing \(m\) with its definition from~\eqref{MDef} for linear interpolation yields the following equation:
 
 \begin{equation*}
     \begin{split}
@@ -192,16 +237,17 @@ Injecting the linear definition of \(m\) from~\eqref{MDef}, this results in the 
         \\
         + \frac{t \cdot (t_{k_2} - t) \cdot 2 \cdot v \cdot \Delta c}{\Delta t}
         + t^2 \cdot \|v\|^2
-        + \frac{(t_{k_2} - t)^2 \cdot \|\Delta c\|^2}{\Delta t^2}
+        + \frac{{(t_{k_2} - t)}^2 \cdot \|\Delta c\|^2}{\Delta t^2}
         \\
         = 0
     \end{split}
 \end{equation*}
 
-Resolving this using binomials and grouping parts with the same degree results in a 2nd degree polynomial
+The partials of the equation created from \(m\) can now be resolved into individual parts with different polynomial degrees.
+The resulting summands can then be grouped by their degree to create a polynomial
 
-\begin{equation}
-    d_2t^2 + d_1t + t_0 = 0
+\begin{equation}\label{SpherePoly}
+    d_2t^2 + d_1t + d_0 = 0
 \end{equation}
 
 with
@@ -237,13 +283,13 @@ with
 If \(r\) also needs to be varied between keyframes,
 replace \(r^2\) with the according interpolated value \((m - r_{k_1} + (1-m) r_{k_2})^2\) and resolve accordingly.
 \newline
-The real roots of this equation represent all times at which the sphere and ray would theoretically intersect.
+The real roots of~\eqref{SpherePoly} represent all times at which the sphere and ray would theoretically intersect.
 Note that all roots \(t\) where \(t < t_{k_1}\) or \(t > t_{k_2}\) must be discarded
 because the surface is not described by \(k_1\) and \(k_2\) outside the time frame between them.
-Additionally, all roots where \(t \le t_0\) must be discarded as these intersections would happen before the ray started,
+Additionally, all roots where \(t \le t_0\) must be discarded as these intersections would happen before the ray is launched,
 behind its starting location.
 \newline
-Of the real roots remaining after this filter, the lowest result for \(t\) is the one where the ray and sphere intersect,
+Of the roots remaining after this filter, the lowest result for \(t\) is the one where the ray and sphere intersect,
 assuming the ray does not bounce off of a different object before that.
 The coordinates at which the intersection takes place can be calculated by calculating \(R(t)\).
 
@@ -251,21 +297,23 @@ The coordinates at which the intersection takes place can be calculated by calcu
 
 \section{Intersection Checks for Surfaces}
 
-Similarly to spheres, a polygonal surface \(S\) can also be modelled using a set of keyframes \(k_n\),
-each with points \(P_{1..o, k_n}\) for the corners of the surface, with \(o \ge 3\) and \(o\) being consistent between keyframes.
+Similarly to spheres, a polygonal surface \(S\) with \(o \ge 3\) corners can also be modelled using a set of keyframes \(k_n\),
+each with points \(P_{1..o, k_n}\) for the corners of the surface, with \(o\) being consistent between keyframes.
 As with spheres, intersection calculations need to be run separately for each set of consecutive keyframes \(k_1\) and \(k_2\).
 \newline
-Using \(m\) from~\eqref{MDef} with the same caveats, each point \(P_{n, t}\) is calculated as
+Using \(m\) from~\eqref{MDef} with the same caveats,
+each point \(P_{n, t}, 1 \le n \le o\) is calculated as a blend between \(P_{n, 1}\) and \(P_{n, 2}\):
 
 \begin{equation}\label{SurfacePointDef}
     P_{n, t} = m \cdot P_{n, k_1} + (1 - m) \cdot P_{n, k_2}, 1 \le n \le o
 \end{equation}
 
 Assuming all points of the polygon are within one surface,
-the surface containing the polygon at any given time \(t\) can be described as the set of all points \(x\) where
+the surface equation from~\eqref{StaticSurface} can be made a function of \(t\)
+by replacing \(P_{1..3}\) with their time-dependent counterparts \(P_{1..3, t}\):
 
 \begin{equation}\label{SurfaceDef}
-    (x - P_{1, t}) \cdot ((P_{2, t} - P_{1, t}) \times (P_{3, t} - P_{1, t})) = 0
+    (p - P_{1, t}) \cdot ((P_{2, t} - P_{1, t}) \times (P_{3, t} - P_{1, t})) = 0
 \end{equation}
 
 Injecting~\eqref{RayEq} into~\eqref{SurfaceDef}:
@@ -275,7 +323,8 @@ Injecting~\eqref{RayEq} into~\eqref{SurfaceDef}:
 \end{equation}
 
 The vector cross product is distributive over addition (i.e.\ \( (x + y) \times z = x \times z + y \times z\)),
-which can be used to split up the big cross product into several smaller cross products:
+which can be used to split up the single cross product describing the surface normal into several cross products with single factors,
+allowing them to be resolved easier:
 
 \begin{equation*}
     (P + t \cdot v - t_0 \cdot v - P_{1, t}) \cdot
@@ -284,7 +333,7 @@ which can be used to split up the big cross product into several smaller cross p
 
 The cross product of a vector with itself is always a vector of zeroes,
 which in turn is the identity element for addition (i.e.\ adding it to another vector just results in the other vector),
-thus the last of these four cross products \(P_{1, t} \times P_{1, t}\) can be discarded:
+thus the last of these four cross products (\(P_{1, t} \times P_{1, t}\)) can be discarded:
 
 \begin{equation}\label{SurfaceBeforeCross}
     (P + t \cdot v - t_0 \cdot v - P_{1, t}) \cdot
@@ -299,8 +348,11 @@ Using~\eqref{SurfacePointDef} to describe a cross product between two generic po
     = ((1-m) \cdot P_{a, k_2} + m \cdot P_{a, k_1}) \times ((1-m) \cdot P_{b, k_2} + m \cdot P_{b, k_1})
 \end{equation}
 
-Again exploiting that the cross product is distributive over addition, as well as the fact that with a scalar \(a\),
-\(a \cdot (x \times y) = x \times (a \cdot y)\), this can be resolved to a polynomial function of \(m\):
+This can again be simplified by using the fact that the cross product is distributive over addition.
+Additionally, scalar factors can be extracted from cross products
+as the cross product linearly scales with the individual vectors' magnitude,
+so for a scalar \(a\) and two vectors \(x, y\), \(x \times (a \cdot y) = a \cdot (x \times y)\).
+This can be exploited to resolve the equation to a polynomial function of \(m\):
 
 \begin{equation}
     \begin{split}
@@ -334,7 +386,7 @@ As with~\eqref{SphereBeforeM}, to get a function of \(t\),
         + (P_{a, k_2} \times P_{b, k_1})
         )}{\Delta t}
     \\
-    + \frac{(t_{k_2} - t)^2 \cdot (
+    + \frac{{(t_{k_2} - t)}^2 \cdot (
         (P_{a, k_2} \times P_{b, k_2})
         - (P_{a, k_1} \times P_{b, k_2})
         - (P_{a, k_2} \times P_{b, k_1})
@@ -342,6 +394,7 @@ As with~\eqref{SphereBeforeM}, to get a function of \(t\),
         )}{\Delta t^2}
 \end{multline*}
 
+Using the distributive law and the binomial theorem,
 This can be resolved to a second-degree polynomial
 
 \begin{equation}\label{SurfaceCrossPoly}
@@ -391,7 +444,7 @@ with
     \end{split}
 \end{equation}
 
-Inserting~\eqref{SurfaceCrossPoly} into~\eqref{SurfaceBeforeCross}:
+Replacing the cross products in~\eqref{SurfaceBeforeCross} with the polynomial from~\eqref{SurfaceCrossPoly} yields:
 
 \begin{equation*}
     (P + t \cdot v - t_0 \cdot v - P_{1, t}) \cdot
@@ -418,7 +471,9 @@ results in this equation:
     = 0
 \end{equation}
 
-Again using the fact that vector dot products are distributive over addition, this can be resolved to a third degree polynomial
+Again using the fact that vector dot products are distributive over addition to shape this into a sum of several dot products,
+then extracting \(t\) and grouping the individual summands by their polynomial degree,
+this can be resolved to a third degree polynomial
 
 \begin{equation}\label{SurfacePolyStart}
     t^3d_3 + t^2d_2 + td_1 + d_0 = 0
@@ -462,7 +517,7 @@ must be discarded as explained above.
 \newline
 For the remaining roots, another check needs to be done
 for whether the intersection point \(R(t)\) is actually inside the polygon, and not just on the same surface.
-With triangles, this can be trivially done using the barycentric coordinates as described above.
+With triangles, this can be easily done using the barycentric coordinates as described above.
 \newline
 The root with the lowest value that satisfies the above conditions again represents the time where the ray and polygon intersect,
 assuming there is no intersection happening before. If no root satisfies these conditions, no intersection happens.
@@ -500,4 +555,45 @@ the Rust library \verb|roots| (as of version 0.0.8) used in the proof-of-concept
 depends on the CPU architecture and cannot be reduced to a number of simple operations.
 \newline
 In total, the amount of calculations, especially multiplications, to perform balloons up with this more complex method.
+
 \section{Looping Scenes And Full Algorithm}
+
+A full algorithm to check for intersections then needs to traverse every pair
+(or set, for interpolation modes working with more than two keyframes) of keyframes
+and run the intersection check as described above.
+\newline
+For a surface, this algorithm looks as follows:
+
+\begin{verbatim}
+// define keyframes and ray here
+for index in 0..(keyframes.len - 1) {
+    k1 = keyframes[index];
+    k2 = keyframes[index+1];
+    (d3, d2, d1, d0) = polynomial_parameters(k1, k2);
+    // get all potential intersections
+    roots = solve_cubic_function(d3, d2, d1, d0);
+    intersection_time = null;
+    for root in roots {
+        // filter intersections
+        if root < ray.launch_time {
+            continue;
+        }
+        if root < k1.time || root > k2.time {
+            continue;
+        }
+        // potential further checks here
+
+        if intersection_time == null
+            || root < intersection_time {
+                intersection_time = root
+        }
+    }
+    // no need to check future keyframes
+    // if an intersection was found
+    if root != null {
+        return root;
+    }
+}
+// no intersection
+return null;
+\end{verbatim}
