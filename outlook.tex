@@ -1,0 +1,39 @@
+\chapter{Outlook and Further Research}
+
+% TODO link
+As mentioned in the scope section,
+the research from this thesis alone is not yet sufficient to fully simulate rotating rooms
+and other scenes involving rapid movement
+as the physical forces created in those scenarios and their effect on the sound waves are disregarded.
+\newline
+In the case of rotating rooms in particular,
+the centrifugal force created by the rotation would lead to pressure gradients within the room.
+Exploring the exact effect those pressure gradients have on sound waves
+and how to simulate this using geometric methods would require collaboration between physicists and computer scientists.
+\newline
+As a general outline, air pressure differences probably have an effect on the propagation speed and direction of sound waves.
+With the rotating L-Shaped room used as one of the examples for this thesis,
+this implies that sound waves are directed away from the rotating walls.
+A ray tracer would thus presumably have to calculate the pressure gradients ahead of time,
+then have the rays travel in curved rather than linear trajectories accordingly.
+\newline
+Since the ray equation used to derive the intersection check equations in chapter 3 would thus change,
+new equations would have to be derived using a different formula to model the ray according to the changed requirements.
+The derivation can still follow the same scheme as the one shown in this thesis.
+For surface intersection checks, only the last part of the derivation from~\eqref{SurfaceAfterCross} onward
+(after already having calculated and substituted \(g_{0..2}\)) would diverge from the derivation in this thesis.
+\newline
+Another field for further research could be real-time applications.
+The intersection logic developed for this thesis can only work for pre-calculated rooms
+as all movements in the scene need to be known ahead of time,
+rendering dynamic scenes such as ones developing in real time incompatible.
+\newline
+A dynamic approach could work by not calculating the rays' entire movements at emission time,
+but instead keeping track of all rays moving through the scene at a current point
+and incrementally continuing each ray's journey through the updating scene at recurring intervals.
+\newline
+Considering the higher cost for intersection checks,
+the additional memory costs to keep track of rays
+and the requirement for physics calculations for a proper realistic simulation as outlined above,
+performance might also become a problem for real-time scenes even when using a fast simulation method such as Chandak et al.'s AD-Frustum~\cite{Cha08},
+and new optimisations will be needed.

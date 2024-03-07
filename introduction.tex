@@ -89,7 +89,8 @@ An improved way of checking for intersections between rays and objects is develo
 Optimisations are evaluated and a time-based chunking method is developed to avoid needless intersection checks.
 Additionally, a method is developed to to losslessly and efficiently store the multiple impulse responses created by re-calculating
 the impulse responses for different points in time.
-The goal of this research is to lay the groundwork to allow accurate simulation of acoustics in moving rooms.
+The goal of this research is to lay part of the groundwork required to allow accurate simulation of acoustics in moving rooms.
+\newline
 Three test cases are developed for this and compared to an implementation more akin to existing methods:
 An empty scene with the sound receiver approaching the sound emitter at 1/9th the speed of sound,
 a square room rapidly rotating
@@ -101,6 +102,10 @@ Only a proof of concept that shows that the idea of this new simulation method w
 \newline
 Side effects of moving scenes, such as sounds emitted by moving objects, are also discarded as they are irrelevant to
 the changed intersection logic.
+In the real world, rapid rotations such as the ones in the example scenes would create centrifugal force,
+which would lead to air pressure differing in different parts of the room,
+which would in turn change the behaviour of sound waves bouncing around the room.
+Exploring these changes requires further research and is outside the scope of this thesis.
 A note-worthy side effect that gets ignored is mass inertia:
 The example case where this would become relevant is the inside of a linearly moving enclosed room, such as a driving car.
 Due to mass inertia, sound waves travelling inside this moving rome behave the same as if the car stood still.
@@ -109,6 +114,3 @@ it can be ignored for this research.
 \newline
 Real-time applications cannot use this proposed method as it requires knowledge of objects' future movements ahead of time.
 Further research is required to develop an alternative method for real-time or dynamic simulations.
-A real-time approach could work by not calculating the rays' entire movements at emission time,
-but instead keeping track of all moving rays and incrementally continuing their journey through the now updated scene
-at recurring intervals.
