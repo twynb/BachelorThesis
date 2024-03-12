@@ -1,0 +1,99 @@
+\chapter{Evaluation}\label{ch:Evaluation}
+
+In order to evaluate the effectiveness of the newly developed interpolating intersection logic,
+three test cases will be used and compared to the snapshot method.
+\newline
+The first test case is simple: A receiver moves towards an emitter at 1/9th the speed of sound.
+It starts 342.2 meters away from the emitter.
+The emitter sends out a sine wave at 440Hz for 1 second.
+No other objects are in the scene.
+\newline
+This is essentially the example described in \ref{im:SnapshotExplain}
+and is used to demonstrate the basic differences between interpolated and snapshot methods.
+\newline
+% TODO image
+The second test case takes place inside a rotating rectangular room.
+Said room is 4 meters in width and length and 3 meters tall.
+The receiver is in the very middle of the room,
+with the emitter being 1.2 meters above it.
+The room rotates around the Z-axis once per second.
+\newline
+This is used to test whether the differences between interpolated and snapshot methods
+lead to a notable difference in a slightly more practical scenario.
+\newline
+% TODO image
+The third test case takes place inside a rotating L-shaped room,
+as denoted in IMAGE, with the receiver being at the origin
+and the emitter being 0.5 meters above it.
+The room again rotates around the Z-axis, but takes three seconds for a full rotation.
+\newline
+This case is used to demonstrate the shortcomings of the interpolating intersection logic
+and the need for further research for realistic simulations.
+
+\section{Approaching Receiver Scene}
+
+In theory, two effects should be observable here.
+\newline
+Firstly, the ray would take 1 second to arrive at the emitter's position.
+As the emitter is travelling towards the ray and covering a tenth of the distance in the time the ray travels the remainder,
+the sound should already start at 0.9 seconds.
+\newline
+Secondly, due to the emitter's fast movement,
+the doppler effect would lead to a shift in frequency.
+\newline
+Using the well-known doppler effect formula with a propagation speed \(c = 342.2 m/s\), an emitter speed \(v_s = 0 m/s\),
+a receiver speed \(v_r = 342.2/9 m/s = 38.0\bar{2} m/s\) and a base frequency \(f_0 = 440 Hz\),
+the resulting frequency can be calculated as
+\begin{equation}\label{eq:Doppler}
+    f = \frac{c + v_r}{c + v_s} f_0 = \frac{342.2 m/s + 38.0\bar{2} m/s}{342.2 m/s} \cdot 440Hz = 488.\bar{8} Hz
+\end{equation}
+
+% TODO image of sound waves
+As expected, the first effect can be observed in the interpolated version of the simulation,
+but not in the simulation using the snapshot method.
+\newline
+This is because for the snapshot method,
+only the initial position of the receiver is relevant to the distance a ray needs to travel until it arrives at said receiver.
+Thus, the ray has to travel the full 343.2 meters for the initial impulse response, as shown in \ref{im:SnapshotExplain}.
+\newline
+The interpolated version instead takes this effect into account correctly.
+\newline
+One notable detail is that the interpolated method also simulates the doppler effect more accurately.
+The resulting signal from the interpolated method exactly matches the \(488.\bar{8} Hz\) calculated in \eqref{eq:Doppler},
+while the snapshot method instead arrives at a frequency of approximately \(495 Hz\).
+% TODO explanation
+\newline
+% TODO numbers
+Performance wise, the simulations barely differ.
+This is presumably because each impulse response is calculated using only a single ray
+which only needs to check for intersections with a single object,
+rendering the increased intersection check costs insignificant.
+\newline
+Additionally, the snapshot method implementation has the overhead of re-calculating
+the chunks for each snapshot scene.
+This is insignificant in simulations where many rays are used
+as the chunk calculation cost is small by comparison,
+but for this single-ray simulation, the overhead evens out the performance gained from having a cheaper intersection calculation.
+\newline
+A noteworthy implementation detail becomes apparent from the waveform resulting from the simulation:
+As the input signal is a single sine wave and the doppler effect would only raise its frequency,
+the resulting wave should still be a pure sine wave.
+In contrast, the actual result for both simulation types features aliasing effects.
+\newline
+This is because the simulation is run as the same sample rate as the input signal.
+For each input sample, one impulse response is calculated.
+As the doppler effect speeds up the incoming signal,
+but the sped up signal is not upsampled accordingly,
+thus creating the same effect as if the signal was downsampled and stayed at the same frequency.
+\newline
+To alleviate this, one would need to either run the signal through a low-pass filter ahead of time
+or have both the input signal and simulation at a higher sample rate,
+then filter and downsample to the target sample rate afterwards.
+\newline
+The former works, but might damage a signal more complex than a sine wave
+and requires knowledge of the scene ahead of time.
+For a more complex scene where the downsampling effect cannot be easily calculated prematurely,
+this approach becomes unusable.
+\newline
+The latter leads to increased computation cost as more impulse responses need to be calculated for more signals,
+but works with any arbitrary scene.
