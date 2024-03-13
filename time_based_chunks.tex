@@ -93,7 +93,7 @@ each with a varying number \(m\) of keyframes \(K_{0..(m-1)}\).
 The information held by keyframes is the same as defined in \autoref{sec:IntersectSurface}.
 \newline
 Additionally, the starting coordinates of the very first chunk \verb|xmin, ymin, zmin|
-as well as the chunk sizes \verb|sx, sy, sz| need to be known.
+as well as the chunk sizes \verb|wx, wy, wz| need to be known.
 For the starting coordinates, the lowest coordinates any object in the scene ever has can be used.
 The chunk sizes can be determined by determining a number of chunks to use for calculation,
 then calculating the difference between the scene's lowest and highest coordinates in each dimension
@@ -114,12 +114,12 @@ for m in 1..(surface.num_keyframes - 1) {
         keyframe_second.points
     );
     // floor() to round down to the index of the chunk
-    chunk_min_x = floor((min_coords.x - xmin) / sx);
-    chunk_min_y = floor((min_coords.y - ymin) / sy);
-    chunk_min_z = floor((min_coords.z - zmin) / sz);
-    chunk_max_x = floor((max_coords.x - xmin) / sx);
-    chunk_max_y = floor((max_coords.y - ymin) / sy);
-    chunk_max_z = floor((max_coords.z - zmin) / sz);
+    chunk_min_x = floor((min_coords.x - xmin) / wx);
+    chunk_min_y = floor((min_coords.y - ymin) / wy);
+    chunk_min_z = floor((min_coords.z - zmin) / wz);
+    chunk_max_x = floor((max_coords.x - xmin) / wx);
+    chunk_max_y = floor((max_coords.y - ymin) / wy);
+    chunk_max_z = floor((max_coords.z - zmin) / wz);
     for x in chunk_min_x..chunk_max_x {
         for y in chunk_min_y..chunk_max_y {
             for z in chunk_min_z..chunk_max_z {
@@ -210,7 +210,78 @@ function add_to_chunks(key_first, key_second) {
 This can be optimised further by fully behaving like binary search,
 always halving the range between the first and middle keyframe in both directions,
 but in the tests performed for this thesis,
-this version of the algorithm was already fast enough for its time cost to be neglectable
+this version of the algorithm was already fast enough for its time cost to be neglegible
 compared to the intersection check/bouncing time.
 
 \section{Traversing Chunks}
+
+When using chunks, shooting rays no longer simply entails checking for intersections with all objects and choosing the earliest one.
+Instead, the traversal of the ray through the separate chunks is modelled,
+then intersection checks are performed for the objects in each chunk the ray enters.
+\newline
+% TODO cite
+Many algorithms have been developed to model rays moving from one chunk to the next.
+Most of them keep track of the chunk the ray is in as well as the distance the ray has already travelled in one form or another.
+Adapting them to time-based chunks thus requires also keeping track of the time that has elapsed additionally to,
+or instead of, the travel distance.
+Additionally, the intersections within a chunk can no longer be calculated when moving to it,
+as the exit time is not known at this point.
+Instead, intersection checks need to be performed when moving on to the next chunk.
+\newline
+For this thesis and the proof-of-concept implementation,
+a slightly simplified version of the algorithm by Cleary and Wyvill~\cite{CW88} (called CW88 in this thesis) will be adapted.
+\newline
+CW88 works by keeping track of the distance a ray needs to travel until it arrives at the next chunk in each dimension
+using three variables \verb|dx, dy, dz|
+as well as keeping track of the distance a ray needs to travel between two chunk borders in the same dimension
+in three additional variables \verb|deltax, deltay, deltaz|.
+The bound after which the ray has exited the scene is stored in three variables \verb|sx, sy, sz|.
+\newline
+Chunks are stored in a one-dimensional array,
+where a chunk at a given x-, y- and z- index is found at the index \(x \cdot n^2 + y \cdot n + z\),
+with \(n\) being the number of chunks in each dimension.
+This array, however, only holds a single value per chunk indicating whether it contains objects to begin with.
+The chunks that do contain objects are stored in a hash map or similar data structure,
+using the array index as a key.
+\newline
+This index isn't newly calculated with every step.
+Instead, it is stored in a variable \verb|p|,
+with three variables \verb|px, py, pz| storing the value to add to the index when entering a new chunk in the given dimension.
+\newline
+All in all, the original CW88 algorithm works as follows, with variable initialisation left out for brevity:
+
+\begin{verbatim}
+while true {
+	if dx <= dy && dx <= dz {
+		if dx >= sx {
+            return null;
+        }
+		p += px;
+		dx += deltax;
+	} else if dy <= dx && dy <= dz {
+		if dy >= sy {
+            return null;
+        }
+		p += py;
+		dy += deltay;
+	} else {
+		if dz >= sz {
+            return null;
+        }
+		p += pz;
+		dz += deltaz;
+	}
+    if !chunk_contains_objects(p) {
+        continue;
+    }
+    intersection = intersection_check(p);
+    if intersection != null {
+        return intersection;
+    }
+}
+\end{verbatim}
+
+In order to use CW88 with time-based chunks,
+new variables are introduced to also keep track of the elapsed time.
+\verb|tx, ty, tz| become the equivalent of \verb|dx, dy, dz| for time
+while \verb|deltatx, deltaty, deltatz| are the timed version of \verb|deltax, deltay, deltaz|.
