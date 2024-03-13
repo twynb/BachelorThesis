@@ -1,15 +1,15 @@
-\chapter{Optimisation through spatial/temporal division}\label{ch:Chunks}
+\chapter{Optimisation through spatial and temporal division}\label{ch:Chunks}
 
 As Whitted already noted in 1980~\cite{Wh80}, even in a ray tracing system with static checks,
 intersection calculations take up the vast majority of processing time (between 75-95\% in Whitted's case).
-Since this effect will only increase with more expensive intersection checks,
+Since this effect will only increase with more expensive intersection checks as discussed in \autoref{sec:IntersectionCost},
 the amount of checks run per ray should be reduced as much as possible.
 A method for this will be evaluated in this chapter.
 
 \section{Chunks vs. Bounding Volumes}
 
 One common optimisation for ray tracing systems is to limit the amount of intersection calculations by eliminating
-objects the ray cannot intersect with in a simpler way.
+objects the ray cannot intersect with in a simpler way before running proper checks.
 There are two general sets of methods used for this:
 \newline
 Bounding Volume Hierarchies (BVHs), first proposed by Clarke~\cite{Cl76},
@@ -18,7 +18,7 @@ This bounding volume uses a simpler geometric primitive that allows for faster i
 usually quadric surfaces or spheres.
 These bounding volumes are then grouped into bigger bounding volumes, forming a hierarchical tree structure.
 Rays then walk down the tree structure, checking for intersections with the corresponding bounding volumes.
-If it does not intersect with a branch's bounding volume,
+If a ray does not intersect with a branch's bounding volume,
 any objects within that branch can be ignored for further intersection checks.
 \newline
 Another method first proposed as a Three Dimensional Digital Differential Analyzer by Fujimoto and Iwata~\cite{FI85},
@@ -30,8 +30,9 @@ and only check for intersections with the objects contained in the chunk they're
 Since objects can move around the scene, using one of these methods without changes becomes inefficient.
 If, for example, a receiver moves from one end of the scene to the other over the course of ten seconds,
 its bounding volume would extend over all of that distance for the entirety for the scene, despite it not touching
-the majority of it for the most part. Similarly, it would be kept in its starting position's chunk for the entirety
-of the scene despite leaving that area very early, making for needless intersection checks.
+the majority of it for the most part.
+Similarly, it would be kept in its starting position's chunk for the entirety of the scene despite leaving that area very early,
+making for needless intersection checks if a ray enters that area at a later time.
 \newline
 For this use case, chunks become a lot more efficient than BVHs:
 When taking movement over time into account, each object would need separate bounding volumes for separate segments of time,
@@ -39,7 +40,7 @@ forcing a ray to not just check one bounding volume, but multiple per object.
 This also means that in order to be able to create meaningful bounding volume hierarchies,
 each object's bounding volumes would need to be separated at the same points in time,
 which can lead to redundancies if objects move at different times.
-Calculating a useful BVH becomes impossible.
+Calculating a useful BVH becomes near impossible.
 \newline
 The amount of chunks, in turn, does not change:
 They can be adapted simply by storing not just which objects are inside them,
@@ -50,12 +51,11 @@ this means that no intersection checks take place for objects that aren't inside
 \section{Data Structure}
 
 In a simple system, a chunk stores a list where each entry represents an object inside it.
-To accommodate for objects moving in and out of chunks, entries can instead contain three fields:
-One containing the index of the object in question,
-one containing the time at which the object enters the chunk
-and one containing the time at which the object leaves the chunk.
+To accommodate for objects moving in and out of chunks, entries will instead contain three fields:
+One holding the index of the object in question,
+one holding the time at which the object enters the chunk
+and one holding the time at which the object leaves the chunk.
 Since the latter two fields might both be optional if the scene starts/ends with the object inside the scene,
-% TODO source for sum/product type
 this can be nicely represented using a sum type such as Rust's Enumerators or C's union types with different states:
 
 \begin{verbatim}
@@ -85,5 +85,132 @@ Compared to the performance gains from avoiding needless intersection checks,
 this additional space requirement is comparatively minimal.
 
 \section{Calculating Chunks}
+
+Before shooting rays through a scene,
+all objects must be stored correctly within their respective chunks.
+The input to a chunk calculation algorithm would thus be a set of \(n\) surfaces \(S_{0..(n-1)}\),
+each with a varying number \(m\) of keyframes \(K_{0..(m-1)}\).
+The information held by keyframes is the same as defined in \autoref{sec:IntersectSurface}.
+\newline
+Additionally, the starting coordinates of the very first chunk \verb|xmin, ymin, zmin|
+as well as the chunk sizes \verb|sx, sy, sz| need to be known.
+For the starting coordinates, the lowest coordinates any object in the scene ever has can be used.
+The chunk sizes can be determined by determining a number of chunks to use for calculation,
+then calculating the difference between the scene's lowest and highest coordinates in each dimension
+and dividing that by the number of chunks.
+To avoid errors with objects being at the very edge of the last chunk,
+it is recommendable to slightly pad out the scene's lowest and highest coordinates
+from the actual extremes found in objects.
+\newline
+A naive algorithm to place a surface in its appropriate chunks could then look like this:
+
+\begin{verbatim}
+for m in 1..(surface.num_keyframes - 1) {
+    keyframe_first = surface.keyframes[m-1];
+    keyframe_second = surface.keyframes[m];
+    // find the highest and lowest x, y and z values
+    (max_coords, min_coords) = find_max_and_min_coords(
+        keyframe_first.points,
+        keyframe_second.points
+    );
+    // floor() to round down to the index of the chunk
+    chunk_min_x = floor((min_coords.x - xmin) / sx);
+    chunk_min_y = floor((min_coords.y - ymin) / sy);
+    chunk_min_z = floor((min_coords.z - zmin) / sz);
+    chunk_max_x = floor((max_coords.x - xmin) / sx);
+    chunk_max_y = floor((max_coords.y - ymin) / sy);
+    chunk_max_z = floor((max_coords.z - zmin) / sz);
+    for x in chunk_min_x..chunk_max_x {
+        for y in chunk_min_y..chunk_max_y {
+            for z in chunk_min_z..chunk_max_z {
+                chunks[x][y][z].add_surface_entry(
+                    {
+                        time_start: keyframe_first.time,
+                        time_end: keyframe_second.time,
+                        index: surface.index
+                    }
+                );
+            }
+        }
+    }
+}
+\end{verbatim}
+
+Note that to avoid errors after the last keyframe's time,
+the last keyframe then needs to also be processed on its own,
+with each chunk touched by this last keyframe's version of the surface getting an according \verb|Final| entry.
+This will be omitted from the algorithms' pseudocode for brevity.
+\newline
+This naive approach comes with the problem that if an object traverses a long distance between two keyframes,
+it will again be needlessly included in all chunks traversed for the entirety of its lifetime.
+An easy solution for this would be to insert `pseudo-keyframes' interpolated from the actual keyframes
+and running the above calculation between those.
+\newline
+The naive way to determine the position of these pseudo-keyframes while avoiding wrong chunk entries
+would be to move through time from the first keyframe's time to the second keyframe's time,
+then write new chunk entries whenever the chunks at the given time change:
+
+\begin{verbatim}
+function add_to_chunks(key_first, key_second) {
+	last_time = key_first.time;
+	time = key_first.time + 1;
+	key_middle = interpolate(key_first, key_second, time);
+	while time != key_second.time {
+		if key_middle.chunks() != key_first.chunks() {
+			write_chunks(
+                key_first.time,
+                time - 1,
+                index,
+                key_first.chunks()
+            );
+			key_first = key_middle;
+			last_time = time;
+		}
+		time += 1;
+		key_middle = interpolate(key_first, key_second, time);
+	}
+	write_chunks(last_time, time, index, key_second.chunks);
+}
+\end{verbatim}
+
+This is obviously inefficient performance wise as keyframes need to be interpolated for every single step
+despite the chunks potentially staying the same for many of said steps.
+A more efficient approach could use a divide-and-conquer approach,
+continually halving the range between the middling and first keyframe until they are the same,
+somewhat akin to binary search:
+
+\begin{verbatim}
+function add_to_chunks(key_first, key_second) {
+	time = key_first.time
+	while time != key_second.time {
+		time = avg(key_first.time, key_second.time);
+		key_middle = interpolate(key_first, key_second, time);
+		
+		while key_middle.chunks() != key_first.chunks() {
+			time = avg(key_first.time, time);
+			key_middle = interpolate(key_first, key_second, time);
+		}
+		while key_middle.chunks() == key_first.chunks
+            && time != key_second.time {
+			time += 1;
+			key_middle = interpolate(key_first, key_second, time);
+		}
+		write_chunks(
+            key_first.time, 
+            time - 1, 
+            index,
+            key_first.chunks()
+        );
+		
+		key_first = key_middle;
+	}
+}
+\end{verbatim}
+
+This can be optimised further by fully behaving like binary search,
+always halving the range between the first and middle keyframe in both directions,
+but in the tests performed for this thesis,
+this version of the algorithm was already fast enough for its time cost to be neglectable
+compared to the intersection check/bouncing time.
 
 \section{Traversing Chunks}
