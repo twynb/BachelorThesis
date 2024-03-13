@@ -146,9 +146,9 @@ but works with any arbitrary scene.
         \hline
         Run & Snapshot 1 & Snapshot 2 & Snapshot 3 & Interp. 1 & Interp. 2 & Interp. 3 \\
         \hline
-        Time & 0:22:35 & 0:22:21 & 0:22:22 & TODO & TODO & TODO \\
+        Time & 0:22:35 & 0:22:21 & 0:22:22 & 4:36:24 & TODO & TODO \\
         \hline
-        \(T_{60}\) & 5.23s & 5.16s & 5.19s & TODO & TODO & TODO \\
+        \(T_{60}\) & 5.23s & 5.16s & 5.19s & 5.23s & TODO & TODO \\
         \hline
     \end{tabular}
     \caption{Rotating Cube Test Results}
@@ -161,8 +161,8 @@ the late reverberation in the scene becomes almost the same.
 \newline
 Still, a minor difference can be observed for the reverberation time \(T_{60}\),
 as listed in~\ref{tbl:CubeScene}:
-For the snapshot method, \(T_{60}\) is approximately TODO,
-whereas in the interpolated simulation, \(T_{60}\) becomes TODO.
+In the interpolated simulation, \(T_{60}\) is slightly higher,
+so the reverberation rings out for longer.
 \newline
 As rays still lose the same amount of energy per bounce
 and thus take the same amount of bounces until their energy is depleted,
@@ -172,7 +172,7 @@ which in turn means they generally travel a longer distance between bounces.
 This could partially be due to a bounce into a corner,
 which would normally make for two bounces off each side of the corner,
 becoming a single bounce as the other side of the corner moves out of the way before a ray can reach it.
-%TODO potentially investigate further?
+% TODO potentially investigate further?
 \newline
 Performance wise, the interpolated method expectedly is much more expensive.
 As seen in~\ref{tbl:CubeScene}, the computation time increases roughly tenfold.
@@ -194,5 +194,14 @@ This was expected as discussed in \autoref{sec:IntersectionCost}
     \caption{Rotating L-Shaped Room Test Results}
 \end{table}
 
-This scene shows the limitations of the simulation as it stands.
-%TODO STUFF
+Note that this scene shows a large limitation of the interpolated simulation as it stands:
+% TODO image
+As the back surface of the room is rotating in a circle,
+it is possible for it to hit a ray while that ray is moving away from it.
+This would not happen in the real world as pressure gradients would guide the sound wave away from the wall.
+\newline
+The behaviour for sound waves getting hit by a wall from behind is thus not defined by physics.
+For the sake of this simulation, the rays are discarded as they can't bounce off the wall.
+This case can be made less likely by having the room rotate at a slower speed:
+The lower the rotation speed, the flatter the angle rays have to bounce off the wall at to be able to then get hit by it from behind.
+That solution, however, is antithetical to the goal of this research, which is to simulate rapidly rotating rooms.

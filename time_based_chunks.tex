@@ -235,7 +235,8 @@ CW88 works by keeping track of the distance a ray needs to travel until it arriv
 using three variables \verb|dx, dy, dz|
 as well as keeping track of the distance a ray needs to travel between two chunk borders in the same dimension
 in three additional variables \verb|deltax, deltay, deltaz|.
-The bound after which the ray has exited the scene is stored in three variables \verb|sx, sy, sz|.
+The bounds of the scene in each dimension are stored in variables \verb|sx, sy, sz|.
+Once \verb|dn >= sn| for any dimension n, the ray has gone out of bounds without hitting any object.
 \newline
 Chunks are stored in a one-dimensional array,
 where a chunk at a given x-, y- and z- index is found at the index \(x \cdot n^2 + y \cdot n + z\),
