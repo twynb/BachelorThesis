@@ -43,10 +43,10 @@ as it only attempts to simulate sound travelling from emitter to receiver
 without considering bounces from a room around it.
 The ray is always directed at the receiver.
 \newline
-The other two test cases are run using 1 million rays per sample for the performance tests
-and 5 million rays per sample for comparing values,
+The other two test cases are run using 10 million rays per impulse response,
 which is enough to get an approximate \(T_{60}\) accurate to the 10th of a second.
 This is sufficient to draw conclusions about the scenes while requiring a reasonable amount of compute time.
+To account for variance introduced by randomness, 3 runs are done per simulation method and scene.
 \newline
 For the two rotating scenes, only one impulse response is calculated and applied to all samples.
 This is because the starting condition of a rotating room is always the same:
@@ -57,11 +57,11 @@ making for the same impulse response at all times.
 \newline
 Simulations would become much more expensive for scenes where this condition doesn't apply,
 as that would mean calculating individual impulse responses for each sample.
-For a 1 second sample at 44100 KHz and a roughly 2 minute IR calculation time
+For a 1 second sample at 44100 KHz and a roughly 20 minute IR calculation time
 (rounded down from the snapshot method test results below),
-this would take \(44100 \cdot 2 m = 88200 m = 1470 h = 61.25 d\).
-Running simulations for such scenes would require optimisations or much stronger hardware
-to be able to run in a reasonable time.
+this would take \(44100 \cdot 20 m = 882000 m = 14700 h = 612.5 d\).
+Running simulations for such scenes would require optimisations, much stronger hardware
+and/or conceits on ray count to be able to run in a reasonable time.
 \newline
 All walls in scenes that contain any have a material roughly resembling smooth concrete walls' behaviour for high frequencies.
 The absorption coefficient, based on data by acoustic.ua (\url{https://www.acoustic.ua/st/web_absorption_data_eng.pdf}),
@@ -140,13 +140,27 @@ but works with any arbitrary scene.
 
 \section{Rotating Cube Scene}
 
+\begin{table}[t!]\label{tbl:CubeScene}
+\centering
+    \begin{tabular}{| c | c | c | c | c | c | c |}
+        \hline
+        Run & Snapshot 1 & Snapshot 2 & Snapshot 3 & Interp. 1 & Interp. 2 & Interp. 3 \\
+        \hline
+        Time & 0:22:35 & 0:22:21 & 0:22:22 & TODO & TODO & TODO \\
+        \hline
+        \(T_{60}\) & 5.23s & 5.16s & 5.19s & TODO & TODO & TODO \\
+        \hline
+    \end{tabular}
+    \caption{Rotating Cube Test Results}
+\end{table}
 % TODO T60s, Performance tables
 There is very little audible difference between the snapshot and interpolated version of this scene.
 This was to be expected: Since the distance sound travels from wall to wall hardly changes for a rotating scene
 and the angle it bounces at becomes insignificant as the reflection becomes more diffuse over time,
 the late reverberation in the scene becomes almost the same.
 \newline
-Still, a minor difference can be observed for the reverberation time \(T_{60}\):
+Still, a minor difference can be observed for the reverberation time \(T_{60}\),
+as listed in~\ref{tbl:CubeScene}:
 For the snapshot method, \(T_{60}\) is approximately TODO,
 whereas in the interpolated simulation, \(T_{60}\) becomes TODO.
 \newline
@@ -163,3 +177,21 @@ becoming a single bounce as the other side of the corner moves out of the way be
 Performance wise, the interpolated method expectedly is much more expensive.
 A test run with 1 million rays per sample took 2 minutes and 20 seconds to complete for the snapshot method,
 whereas the same test run with the interpolated method took 25 minutes and 16 seconds.
+
+\section{Rotating L-Shaped Room Scene}
+
+\begin{table}[t!]\label{tbl:LScene}
+\centering
+    \begin{tabular}{| c | c | c | c | c | c | c |}
+        \hline
+        Run & Snapshot 1 & Snapshot 2 & Snapshot 3 & Interp. 1 & Interp. 2 & Interp. 3 \\
+        \hline
+        Time & 0:24:10 & TODO & TODO & TODO & TODO & TODO \\
+        \hline
+        \(T_{60}\) & 5.31s & TODO & TODO & TODO & TODO & TODO \\
+        \hline
+    \end{tabular}
+    \caption{Rotating L-Shaped Room Test Results}
+\end{table}
+
+BLABLA
