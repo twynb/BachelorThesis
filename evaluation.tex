@@ -175,8 +175,8 @@ becoming a single bounce as the other side of the corner moves out of the way be
 %TODO potentially investigate further?
 \newline
 Performance wise, the interpolated method expectedly is much more expensive.
-A test run with 1 million rays per sample took 2 minutes and 20 seconds to complete for the snapshot method,
-whereas the same test run with the interpolated method took 25 minutes and 16 seconds.
+As seen in~\ref{tbl:CubeScene}, the computation time increases roughly tenfold.
+This was expected as discussed in \autoref{sec:IntersectionCost}
 
 \section{Rotating L-Shaped Room Scene}
 
@@ -186,12 +186,13 @@ whereas the same test run with the interpolated method took 25 minutes and 16 se
         \hline
         Run & Snapshot 1 & Snapshot 2 & Snapshot 3 & Interp. 1 & Interp. 2 & Interp. 3 \\
         \hline
-        Time & 0:24:10 & TODO & TODO & TODO & TODO & TODO \\
+        Time & 0:24:10 & 0:24:11 & 0:23:48 & TODO & TODO & TODO \\
         \hline
-        \(T_{60}\) & 5.31s & TODO & TODO & TODO & TODO & TODO \\
+        \(T_{60}\) & 5.31s & 4.98s & 4.99s & TODO & TODO & TODO \\
         \hline
     \end{tabular}
     \caption{Rotating L-Shaped Room Test Results}
 \end{table}
 
-BLABLA
+This scene shows the limitations of the simulation as it stands.
+%TODO STUFF
