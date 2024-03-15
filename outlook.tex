@@ -1,4 +1,4 @@
-\chapter{Outlook and Further Research}
+\chapter{Outlook and Further Research}\label{ch:Outlook}
 
 % TODO link
 As mentioned in the scope section,
@@ -23,6 +23,17 @@ The derivation can still follow the same scheme as the one shown in this thesis.
 For surface intersection checks, only the last part of the derivation from~\eqref{SurfaceAfterCross} onward
 (after already having calculated and substituted \(g_{0..2}\)) would diverge from the derivation in this thesis.
 \newline
+As the ray equation will then become more complicated than a simple linear equation,
+the resulting equation may also become more complicated.
+If, for example, the ray would now be modelled as a quadratic equation,
+the polynomial derived for surface intersection checks would become a fourth degree one,
+rather than the third degree one it is with the linear equation.
+If the polynomial degree goes beyond four
+or the resulting ray equation cannot be resolved to a polynomial to begin with,
+solving the equations algebraically becomes impossible,
+instead requiring numeric approximations of their roots.
+This will in turn again highly increase the computing cost associated with intersection checks.
+\newline
 Another field for further research could be real-time applications.
 The intersection logic developed for this thesis can only work for pre-calculated rooms
 as all movements in the scene need to be known ahead of time,
@@ -35,5 +46,6 @@ and incrementally continuing each ray's journey through the updating scene at re
 Considering the higher cost for intersection checks,
 the additional memory costs to keep track of rays
 and the requirement for physics calculations for a proper realistic simulation as outlined above,
-performance might also become a problem for real-time scenes even when using a fast simulation method such as Chandak et al.'s AD-Frustum~\cite{Cha08},
+performance might also become a problem for real-time scenes
+even when using a fast simulation method such as the AD-Frustum developed by Chandak et al.~\cite{Cha08},
 and new optimisations will be needed.
