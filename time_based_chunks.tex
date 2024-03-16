@@ -235,8 +235,11 @@ CW88 works by keeping track of the distance a ray needs to travel until it arriv
 using three variables \verb|dx, dy, dz|
 as well as keeping track of the distance a ray needs to travel between two chunk borders in the same dimension
 in three additional variables \verb|deltax, deltay, deltaz|.
+The \verb|delta*| variables are initialised based on the ray's direction cosines,
+with \verb|d*| being initialised as the percentage of the corresponding \verb|delta*| variable relevant to the starting chunk.
 The bounds of the scene in each dimension are stored in variables \verb|sx, sy, sz|.
-Once \verb|dn >= sn| for any dimension n, the ray has gone out of bounds without hitting any object.
+Once \verb|dx >= sx| or the equivalent in another dimension becomes true,
+the ray has gone out of bounds without hitting any object.
 \newline
 Chunks are stored in a one-dimensional array,
 where a chunk at a given x-, y- and z- index is found at the index \(x \cdot n^2 + y \cdot n + z\),
@@ -249,9 +252,33 @@ This index isn't newly calculated with every step.
 Instead, it is stored in a variable \verb|p|,
 with three variables \verb|px, py, pz| storing the value to add to the index when entering a new chunk in the given dimension.
 \newline
-All in all, the original CW88 algorithm works as follows, with variable initialisation left out for brevity:
+All in all, the original CW88 algorithm works as follows,
+with initialisation of y- and z-related variables being omitted for brevity:
 
 \begin{verbatim}
+// init cx as direction cosine for x
+// init chunkx, chunky, chunkz as chunk index
+p = chunkx * pow(n, 2) + chunky * n + chunkz;
+mx = pow(n,2);
+chunk_start = xmin + chunkx * wx;
+if cx == 0 {
+	// no movement in x direction
+	dx = MAX_INT;
+	sx = 0;
+} else {
+	if cx > 0 {
+		deltax = wx/cx;
+		px = mx;
+		dx = (chunk_start + wx - x) / wx * deltax;
+		sx = (n-chunkx) * deltax;
+	} else {
+		deltax = -wx/cx;
+		px = -mx;
+		dx = (x - chunk_start) / wx * deltax;
+		sx = (chunkx + 1) * deltax;
+	}
+}
+// init y and z variables by the same schema here
 while true {
 	if dx <= dy && dx <= dz {
 		if dx >= sx {
@@ -286,3 +313,94 @@ In order to use CW88 with time-based chunks,
 new variables are introduced to also keep track of the elapsed time.
 \verb|tx, ty, tz| become the equivalent of \verb|dx, dy, dz| for time
 while \verb|deltatx, deltaty, deltatz| are the timed version of \verb|deltax, deltay, deltaz|.
+\newline
+\verb|deltatx, deltaty, deltatz| are simply initialised as \verb|deltax/velocity, deltay/velocity, deltaz/velocity|,
+with \verb|velocity| representing the ray's velocity, usually the speed of sound.
+\verb|tx| is initialised as \verb|dx/velocity + t0|, with t0 being the ray's starting time.
+\verb|ty| and \verb|tz| can be initialised by the same scheme.
+\newline
+As distance travelled and time passed directly scale,
+the \verb|deltat*| and \verb|t*| variables could be omitted with \verb|t*| being calculated from \verb|dx| whenever needed.
+In practice, keeping them as a separate variable means that updating \verb|d*| only takes a single addition per step,
+whereas the cost of calculating \verb|t*| from \verb|d*| every step would take both an addition and a division.
+\newline
+This does however allow for removal of both \verb|delta*| and \verb|d*|
+as \verb|deltat*| and \verb|t*| can be used to track the distance to the next chunk in the same way.
+The \verb|s*| variables then need to be calculated using \verb|deltat*| rather than \verb|delta*|.
+\newline
+Another necessary change is that, as discussed above,
+the intersection check done at the end of the loop is not done for the newly entered chunk that matches \verb|p|,
+but the chunk the ray just left instead.
+In order to then keep the time the ray entered the last chunk,
+a new variable \verb|tlast| is introduced and initialised as the ray's starting time.
+\newline
+The full traversal algorithm, omitting all variable initialisation for brevity, then looks as follows:
+
+\begin{verbatim}
+while true {
+	if tx <= ty && tx <= tz {
+        intersection = traverse_chunk(p, tx, tlast);
+        if intersection != null {
+            return intersection;
+        }
+        tlast = tx;
+		p += px;
+		tx += deltatx;
+		if tx >= sx {
+            return null;
+        }
+	} else if ty <= tx && ty <= tz {
+        intersection = traverse_chunk(p, ty, tlast);
+        if intersection != null {
+            return intersection;
+        }
+        tlast = ty;
+		p += py;
+		ty += deltaty;
+		if ty >= sy {
+            return null;
+        }
+	} else {
+        intersection = traverse_chunk(p, ty, tlast);
+        if intersection != null {
+            return intersection;
+        }
+        tlast = tz;
+		p += pz;
+		tz += deltatz;
+		if tz >= sz {
+            return null;
+        }
+	}
+    if !chunk_contains_objects(p) {
+        continue;
+    }
+    intersection = intersection_check(p);
+    if intersection != null {
+        return intersection;
+    }
+}
+
+function traverse_chunk(p, t_dimension, tlast) {
+    if !chunk_contains_objects(p) {
+        continue;
+    }
+    intersection = intersection_check(p);
+    if intersection != null 
+        && intersection.time <= t_dimension
+        && intersection.time >= tlast {
+        return intersection;
+    }
+    return null;
+}
+\end{verbatim}
+
+% TODO image
+Intersections that are outside of the entry/exit time for the current chunk are discarded.
+This is to avoid errors when a ray would intersect with the given object in a chunk it will enter later,
+but would also hit another object before it.
+If the other object is not inside the chunk the ray starts out in,
+but the object that would get hit later is,
+that later intersection would otherwise incorrectly be returned without ever checking for an intersection with the other object.
+This error can also occur with the original CW88 algorithm,
+but incidentally becomes easier to fix through this adaptation.

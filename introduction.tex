@@ -84,6 +84,7 @@ which would lead to air pressure differing in different parts of the room,
 in turn changing the behaviour of sound waves bouncing around the room.
 Other rapid movements would create other forces and pressure gradients.
 Exploring these changes requires further research and is outside the scope of this thesis.
+In \autoref{sec:LRoom}, an example where the simulation without regard for pressure gradients falls short will be shown.
 \newline
 A note-worthy side effect that gets ignored is mass inertia:
 The example case where this would become relevant is the inside of a linearly moving enclosed room, such as a driving car.
@@ -97,21 +98,28 @@ Further research is required to develop an alternative method for real-time or d
 \section{Outline}
 
 In \autoref{ch:Fundamentals}, a basic outline on existing research and the general functionality of geometric acoustics simulation is given.
+This includes a basic explanation of ray tracing as well as audio-specific aspects of it.
 The following chapters cover new research based on these fundamentals.
 \newline
-\autoref{ch:Intersection} then focuses on the expanded logic required to bounce rays through moving scenes.
+% capitalisation workaround
+\hyperref[ch:Intersection]{Chapter~\ref*{ch:Intersection}} then focuses on the expanded logic required to bounce rays through moving scenes.
 This involves deriving new equations to check for intersections with moving objects.
 The performance cost of these new checks is compared to that for static objects.
 \newline
 To alleviate part of this cost, in \autoref{ch:Chunks},
-a commonly used optimisation that divides a scene into separate chunks and only checks for intersections with objects in the relevant chunks
-is adapted to moving scenes.
+a commonly used optimisation that divides a scene into separate chunks
+and only checks for intersections with objects in the relevant chunks is adapted to moving scenes.
+This is done by separating objects not just by their position (the base for this type of optimisation in static scenes),
+but also by the time at which they are at any given position.
 \iffalse
     \newline
     irs ch5
 \fi
 \newline
-For \autoref{ch:Evaluation}, a proof-of-concept implementation of the methods developed in this thesis is developed
+For \autoref{ch:Evaluation}, a proof-of-concept implementation of the methods proposed in this thesis is developed
 and compared to an implementation based on static scenes.
 This evaluation is both looking at changes in simulation quality and performance from the static methods to the newly developed ones
 as well as seeing where the logic proposed in this thesis still falls short and requires further research.
+\newline
+\hyperref[ch:Outlook]{Chapter~\ref*{ch:Outlook}} provides some insight into what further research could entail,
+and how the simulation of moving scenes might need to be adapted in order to become realistic.
