@@ -22,6 +22,12 @@
 \usepackage{psfrag}
 \usepackage{color}
 \usepackage{amsmath}
+\usepackage{tikz}
+\usepackage{tikz-cd}
+\usepackage{pgfplots}
+\pgfplotsset{compat=1.14}
+% workaround for matplotlib pgf plots
+\def\mathdefault#1{#1}
 
 % \setcounter{lotdepth}{2}
 
@@ -140,6 +146,8 @@ TEXT ENGLISCH
 \include{time_based_impulse_responses}
 \cleardoublepage
 \include{evaluation}
+\cleardoublepage
+\include{summary}
 \cleardoublepage
 \include{outlook}
 \cleardoublepage

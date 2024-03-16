@@ -140,29 +140,33 @@ but works with any arbitrary scene.
 
 \section{Rotating Cube Scene}
 
-\begin{table}[t!]\label{tbl:CubeScene}
-\centering
+\begin{table}[t!]
+    \centering
     \begin{tabular}{| c | c | c | c | c | c | c |}
         \hline
-        Run & Snapshot 1 & Snapshot 2 & Snapshot 3 & Interp. 1 & Interp. 2 & Interp. 3 \\
+        Run        & Snapshot 1 & Snapshot 2 & Snapshot 3 & Interp. 1 & Interp. 2 & Interp. 3 \\
         \hline
-        Time & 0:22:35 & 0:22:21 & 0:22:22 & 4:36:24 & 4:21:59 & TODO \\
+        Time       & 0:22:35    & 0:22:21    & 0:22:22    & 4:36:24   & 4:21:59   & 4:22:34   \\
         \hline
-        \(T_{60}\) & 5.23s & 5.16s & 5.19s & 5.23s & 5.27s & TODO \\
+        \(T_{60}\) & 5.23s      & 5.16s      & 5.19s      & 5.23s     & 5.27s     & 5.22s     \\
         \hline
     \end{tabular}
-    \caption{Rotating Cube Test Results}
+    \caption{Rotating Cube Test Results}\label{tbl:CubeSceneTable}
 \end{table}
-% TODO T60s, Performance tables
-There is very little audible difference between the snapshot and interpolated version of this scene.
+
+\begin{figure}[t!]
+    \begin{center}
+        \input{images/partial_cube_compare.pgf}
+    \end{center}
+    \caption{The first 5000 samples of the impulse response for the rotating cube scene and snapshot/interpolated simulation, respectively}\label{fig:CubeSceneIR}
+\end{figure}
+
+There is very little difference in the reverberation time \(T_{60}\) between the snapshot and interpolated version of this scene.
 This was to be expected: Since the distance sound travels from wall to wall hardly changes for a rotating scene
 and the angle it bounces at becomes insignificant as the reflection becomes more diffuse over time,
 the late reverberation in the scene becomes almost the same.
-\newline
-Still, a minor difference can be observed for the reverberation time \(T_{60}\),
-as listed in~\ref{tbl:CubeScene}:
 In the interpolated simulation, \(T_{60}\) is slightly higher,
-so the reverberation rings out for longer.
+so the reverberation rings out for slightly longer.
 \newline
 As rays still lose the same amount of energy per bounce
 and thus take the same amount of bounces until their energy is depleted,
@@ -175,24 +179,49 @@ becoming a single bounce as the other side of the corner moves out of the way be
 % TODO potentially investigate further?
 \newline
 Performance wise, the interpolated method expectedly is much more expensive.
-As seen in~\ref{tbl:CubeScene}, the computation time increases roughly tenfold.
+As seen in table~\ref{tbl:CubeSceneTable}, the computation time increases by roughly a factor of 12.
 This was expected as discussed in \autoref{sec:IntersectionCost}
+\newline
+As visible in figure~\ref{fig:CubeSceneIR}, the IR of the interpolated version notably features a second set of early reflections,
+approximately around the 3000 sample mark (so after roughly 0.07 seconds),
+while the snapshot version only has the first early reflections both versions have around the 500-1000 sample mark.
+In the auralized version, this becomes noticeable in the form of a fast delay effect on the input signal.
+\newline
+% TODO image
+This effect could come from rays whose initial direction points towards one of the room's side walls,
+with the direction being almost orthogonal to said wall.
+In the snapshot version of the simulation, assuming they don't get reflected diffusely,
+these rays bounce back and forth between opposite walls while hardly moving horizontally,
+meaning it takes long for them to arrive at the receiver again.
+These rays thus only end up in the late reverberation part of the impulse response.
+\newline
+As the angle of the walls changes as they rotate in the interpolated version,
+the angle these rays bounce at changes too.
+This presumably leads to them coming back to the receiver earlier, creating the later early reflections.
 
 \section{Rotating L-Shaped Room Scene}
 
-\begin{table}[t!]\label{tbl:LScene}
-\centering
+\begin{table}[t!]
+    \centering
     \begin{tabular}{| c | c | c | c | c | c | c |}
         \hline
-        Run & Snapshot 1 & Snapshot 2 & Snapshot 3 & Interp. 1 & Interp. 2 & Interp. 3 \\
+        Run        & Snapshot 1 & Snapshot 2 & Snapshot 3 & Interp. 1 & Interp. 2 & Interp. 3 \\
         \hline
-        Time & 0:24:10 & 0:24:11 & 0:23:48 & 7:00:35 & 7:00:56 & 7:00:14 \\
+        Time       & 0:24:10    & 0:24:11    & 0:23:48    & 7:00:35   & 7:00:56   & 7:00:14   \\
         \hline
-        \(T_{60}\) & 5.31s & 4.98s & 4.99s & 5.07s & 5.35 & 5:44 \\
+        \(T_{60}\) & 5.31s      & 4.98s      & 4.99s      & 5.07s     & 5.35      & 5:44      \\
         \hline
     \end{tabular}
-    \caption{Rotating L-Shaped Room Test Results}
+    \caption{Rotating L-Shaped Room Test Results}\label{tbl:LSceneTable}
 \end{table}
+
+\begin{figure}[t!]
+    \begin{center}
+        \input{images/partial_l_compare.pgf}
+    \end{center}
+    \caption{The first 2000 samples of the impulse response for the rotating L-shaped room scene and snapshot/interpolated simulation, respectively}\label{fig:LSceneIR}
+\end{figure}
+
 
 Note that this scene shows a large limitation of the interpolated simulation as it stands:
 % TODO image
