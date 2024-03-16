@@ -213,7 +213,7 @@ but in the tests performed for this thesis,
 this version of the algorithm was already fast enough for its time cost to be neglegible
 compared to the intersection check/bouncing time.
 
-\section{Traversing Chunks}
+\section{Traversing Chunks}\label{sec:TraversingChunks}
 
 When using chunks, shooting rays no longer simply entails checking for intersections with all objects and choosing the earliest one.
 Instead, the traversal of the ray through the separate chunks is modelled,
@@ -404,3 +404,10 @@ but the object that would get hit later is,
 that later intersection would otherwise incorrectly be returned without ever checking for an intersection with the other object.
 This error can also occur with the original CW88 algorithm,
 but incidentally becomes easier to fix through this adaptation.
+\newline
+Simply discarding intersections outside the time the ray is within a chunk comes with the downside of duplicate calculations:
+If an object is inside three chunks the ray travels through, with the intersection happening in the last of those chunks,
+the intersection calculation is run thrice, but tossed away two of those three times.
+\newline
+A solution to this could involve storing the intersections for each already checked object in a map-like structure
+and only newly calculating intersections for objects that haven't been checked yet.

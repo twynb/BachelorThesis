@@ -37,23 +37,26 @@ All 12 logical cores are used for parallel processing.
 \newline
 The proof-of-concept used for testing was written in Rust, using the \verb|nalgebra| crate for algebra functions,
 \verb|roots| for polynomial solving and \verb|rayon| for parallelisation.
+For simplicity's sake, only an energetic response was calculated, not an impulse response.
+This leads to less accurate auralization as phase is disregarded,
+but is sufficient to show basic differences between the snapshot and interpolated method.
 \newline
 The first test case with the approaching receiver is run using one ray per sample
 as it only attempts to simulate sound travelling from emitter to receiver
 without considering bounces from a room around it.
 The ray is always directed at the receiver.
 \newline
-The other two test cases are run using 10 million rays per impulse response,
+The other two test cases are run using 10 million rays per sample,
 which is enough to get an approximate \(T_{60}\) accurate to the 10th of a second.
 This is sufficient to draw conclusions about the scenes while requiring a reasonable amount of compute time.
 To account for variance introduced by randomness, 3 runs are done per simulation method and scene.
 \newline
-For the two rotating scenes, only one impulse response is calculated and applied to all samples.
+For the two rotating scenes, only one energetic response is calculated and applied to all samples.
 This is because the starting condition of a rotating room is always the same:
 As both rooms rotate around the emitter's and the receiver's position
 and the emitter emits rays randomly in all directions,
 the relative position of the room to the receiver and emitter is always the same,
-making for the same impulse response at all times.
+making for the same energetic response at all times.
 \newline
 Simulations would become much more expensive for scenes where this condition doesn't apply,
 as that would mean calculating individual impulse responses for each sample.
@@ -103,12 +106,6 @@ The resulting signal from the interpolated method exactly matches the \(488.\bar
 while the snapshot method instead arrives at a frequency of approximately \(495 Hz\).
 % TODO explanation
 \newline
-% TODO numbers
-Performance wise, the simulations barely differ.
-This is presumably because each impulse response is calculated using only a single ray
-which only needs to check for intersections with a single object,
-rendering the increased intersection check costs insignificant.
-\newline
 Additionally, the snapshot method implementation has the overhead of re-calculating
 the chunks for each snapshot scene.
 This is insignificant in simulations where many rays are used
@@ -121,7 +118,7 @@ the resulting wave should still be a pure sine wave.
 In contrast, the actual result for both simulation types features aliasing effects.
 \newline
 This is because the simulation is run as the same sample rate as the input signal.
-For each input sample, one impulse response is calculated.
+For each input sample, one energetic response is calculated.
 As the doppler effect speeds up the incoming signal,
 but the sped up signal is not upsampled accordingly,
 thus creating the same effect as if the signal was downsampled and stayed at the same frequency.
@@ -135,7 +132,7 @@ and requires knowledge of the scene ahead of time.
 For a more complex scene where the downsampling effect cannot be easily calculated prematurely,
 this approach becomes unusable.
 \newline
-The latter leads to increased computation cost as more impulse responses need to be calculated for more signals,
+The latter leads to increased computation cost as more energetic responses need to be calculated for more signals,
 but works with any arbitrary scene.
 
 \section{Rotating Cube Scene}
@@ -158,7 +155,7 @@ but works with any arbitrary scene.
     \begin{center}
         \input{images/partial_cube_compare.pgf}
     \end{center}
-    \caption{The first 5000 samples of the impulse response for the rotating cube scene and snapshot/interpolated simulation, respectively}\label{fig:CubeSceneIR}
+    \caption{The first 5000 samples of the energetic response for the rotating cube scene and snapshot/interpolated simulation, respectively}\label{fig:CubeSceneIR}
 \end{figure}
 
 There is very little difference in the reverberation time \(T_{60}\) between the snapshot and interpolated version of this scene.
@@ -176,16 +173,26 @@ which in turn means they generally travel a longer distance between bounces.
 This could partially be due to a bounce into a corner,
 which would normally make for two bounces off each side of the corner,
 becoming a single bounce as the other side of the corner moves out of the way before a ray can reach it.
-% TODO potentially investigate further?
 \newline
-Performance wise, the interpolated method expectedly is much more expensive.
-As seen in table~\ref{tbl:CubeSceneTable}, the computation time increases by roughly a factor of 12.
-This was expected as discussed in \autoref{sec:IntersectionCost}
+% TODO image
+\autoref{fig:CubeSceneIR} shows that the early reflections are practically identical between the snapshot and interpolated method.
+This is due to the emitter and receiver being on the scene's rotation axis,
+which in turn means that the scene is always the same relative to both emitter and receiver, just rotated.
 \newline
-As visible in figure~\ref{fig:CubeSceneIR}, the IR of the interpolated version notably features a second set of early reflections,
-approximately around the 3000 sample mark (so after roughly 0.07 seconds),
-while the snapshot version only has the first early reflections both versions have around the 500-1000 sample mark.
-In the auralized version, this becomes noticeable in the form of a fast delay effect on the input signal.
+Thus, the bouncing behaviour for a ray bouncing off of a wall once before hitting the receiver
+in the snapshot simulation happens the same way in the interpolated simulation,
+requiring only a different initial direction to account for the room's rotation.
+Rays are equally distributed in all directions, hence the result being equal.
+\newline
+In a complete simulation including physical forces caused by the room rotation,
+the early reflections would differ from those showing here.
+This will be discussed further in \autoref{sec:LRoom}.
+\newline
+The notable difference between the two energetic responses in \autoref{fig:CubeSceneIR}
+lies in the energetic response of the interpolated version featuring a second set of early reflections,
+approximately around the 3000 sample mark (so after roughly 0.07 seconds).
+These later early reflections do not show in the snapshot method version.
+In auralization, these ERs become noticeable in the form of a fast delay effect on the input signal.
 \newline
 % TODO image
 This effect could come from rays whose initial direction points towards one of the room's side walls,
@@ -193,7 +200,7 @@ with the direction being almost orthogonal to said wall.
 In the snapshot version of the simulation, assuming they don't get reflected diffusely,
 these rays bounce back and forth between opposite walls while hardly moving horizontally,
 meaning it takes long for them to arrive at the receiver again.
-These rays thus only end up in the late reverberation part of the impulse response.
+These rays thus only end up in the late reverberation part of the energetic response.
 \newline
 As the angle of the walls changes as they rotate in the interpolated version,
 the angle these rays bounce at changes too.
@@ -219,9 +226,8 @@ This presumably leads to them coming back to the receiver earlier, creating the 
     \begin{center}
         \input{images/partial_l_compare.pgf}
     \end{center}
-    \caption{The first 2000 samples of the impulse response for the rotating L-shaped room scene and snapshot/interpolated simulation, respectively}\label{fig:LSceneIR}
+    \caption{The first 2000 samples of the energetic response for the rotating L-shaped room scene and snapshot/interpolated simulation, respectively}\label{fig:LSceneIR}
 \end{figure}
-
 
 Note that this scene shows a large limitation of the interpolated simulation as it stands:
 % TODO image
@@ -234,3 +240,49 @@ For the sake of this simulation, the rays are discarded as they can't bounce off
 This case can be made less likely by having the room rotate at a slower speed:
 The lower the rotation speed, the flatter the angle rays have to bounce off the wall at to be able to then get hit by it from behind.
 That solution, however, is antithetical to the goal of this research, which is to simulate rapidly rotating rooms.
+\newline
+To generalise the problem, with the current state of this research,
+any scene that involves surfaces moving in a direction roughly orthogonal to themselves breaks the simulation for the reason described above.
+Since this condition will apply to most scenes more complex than a single room,
+the logic as it stands cannot be used for accurate auralization of moving scenes.
+The steps needed to resolve these issues will be outlined in \autoref{ch:Outlook}.
+\newline
+As the likelihood for a ray to get affected by this problem rises the more it bounces around the scene,
+the \(T_{60}\) and other data about late reverberation lose accuracy,
+rendering conclusions drawn from them less useful.
+The data gathered in the test runs is still included in \autoref{tbl:LSceneTable} for completeness' sake.
+\newline
+The fact that interpolating intersection checks alone do not suffice for an accurate simulation also shows in the energetic responses:
+As seen in \autoref{fig:LSceneIR}, the early reflections are almost exactly the same between the snapshot and interpolated simulation,
+with only minor differences from slightly different random distribution.
+This is the same effect as observed in \autoref{fig:CubeSceneIR} for the square room:
+As the room stays the same relative to the emitter and receiver with only the rotation changing
+and because the rays are distributed equally in all directions,
+rays bouncing off of a wall once before hitting the receiver take the exact same time between the snapshot and interpolated method.
+Any difference in acoustics caused by the rotation lies in physical effects equally ignored in both methods.
+
+\section{Performance}
+
+As expected and discussed in \autoref{sec:IntersectionCost},
+the performance cost skyrockets for the interpolated method in comparison to the snapshot method.
+The factor by which it increases notably changes between the square and L-shaped room scenes:
+In the square room scene, the computation time increases by a factor of approximately 12,
+whereas that factor becomes approximately 17.5 for the L-shaped room.
+\newline
+This increase may be caused by more chunks containing more primitives.
+Where the corners of the square room contain at most 6 primitives (2 triangles for each attached side),
+the inner corner of the L-shaped room's angle may contain up to 8 primitives
+as both the side walls and both squares making up the ceiling meet at those corners,
+each being made up of 2 triangles.
+This intensifies due to the problem mentioned at the end of \autoref{sec:TraversingChunks}
+as this higher number of intersection checks is also run multiple times.
+\newline
+% TODO numbers for first scene
+The only test case in which the performance barely differs is the first test scene.
+This is presumably because each energetic response is calculated using only a single ray
+which only needs to check for intersections with a single object,
+making for a comparably low difference between the interpolating and static intersection checks.
+\newline
+In turn, the implementation of the snapshot method has the additional overhead of re-calculating the scene's chunks for each snapshot scene,
+whereas the interpolated method only needs to run the chunk calculation once in the beginning.
+This overhead presumably offsets the already little additional cost from the interpolating check.

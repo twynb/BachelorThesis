@@ -124,12 +124,14 @@ objects and the ray must move at the same time scale.
 Otherwise, the intersection calculation will yield incorrect results as at the resulting intersection times,
 the ray will either not have travelled to the resulting intersection point yet or will have already surpassed it.
 \newline
-Note that since the resulting polynomial will be of at least 2nd degree, it can have multiple roots.
-Only roots greater than \(t_0\) are relevant as others would represent intersections from before the ray is even launched.
+Note that since the resulting function will, in the simplest case, be a 2nd degree polynomial, it can have multiple roots.
+Only roots greater than \(t_0\) are relevant to the intersection check as others would represent intersections from before the ray is even launched.
 Different primitives might also require different checks to filter out invalid roots depending on how they are modelled,
 such as the check for whether a point is inside a triangle described above.
 Of the remaining roots, the first one represents the actual intersection time,
 the remaining ones can be discarded as they'd only take place if the ray didn't bounce off the first intersection already.
+\newline
+For the remainder of this thesis, this new intersection logic will be referred to as the interpolated method.
 
 \section{Intersection Checks for Spheres}
 
