@@ -28,14 +28,13 @@ this is never the case as light travels several orders of magnitude faster than 
 Even in acoustics simulation, getting within a range where an object's speed becomes significant to sound
 requires movements faster than 100km/h, which don't happen in most cases to be simulated.
 \newline
-% TODO include these formulae in intersection.tex
 The simplest case where this assumption fails is if a receiver approaches a sound emitter at a comparably high speed.
 Using the snapshot method, if the receiver starts at a distance \(d\) away from the emitter,
 the sound will first start arriving at the emitter once the ray has travelled this entire distance,
 so with a propagation speed \(c\) that response time becomes \(t = \frac{d}{c}\).
 In the real world, the receiver would already clear part of \(d\) while the sound wave is travelling towards it.
 If the receiver travels at a velocity \(v\), the response time then becomes \(t = \frac{d}{c + v}\).
-If \(v\) is 1/9th the speed of sound (137.2 km/h),
+As an example, if \(v\) is 1/9th the speed of sound (137.2 km/h),
 the response time is already reduced by 10\%, a difference well audible to the human ear.
 \newline
 To resolve this issue, the logic to check for intersections between rays and objects needs to be adapted.
