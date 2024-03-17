@@ -42,8 +42,7 @@ Bilibashi et al.~\cite{BVD20} have explored simulating rays bouncing between a s
 but their approach is not viable for a full room acoustics simulation.
 \newline
 Existing simulations have only concerned themselves with static scenes.
-% TODO cite EAR
-For dynamic scenes, existing tools such as EAR and research such as that by Chandak et al.~\cite{Cha08}
+For dynamic scenes, existing tools such as EAR~\cite{Kr17} and research such as that by Chandak et al.~\cite{Cha08}
 work around having to account for movement by taking a static version of the scene at a given time
 and bouncing rays through that instead,
 then repeating this process for every point in time at which acoustics are simulated.
@@ -53,7 +52,7 @@ that the distance they would travel in the time a ray is bouncing through the sc
 To start alleviating this problem,
 this thesis aims to create a new way to simulate bouncing rays through a moving room without errors introduced by the older approach.
 
-\section{Scope of This Thesis}
+\section{Scope of This Thesis}\label{sec:Scope}
 
 This thesis proposes a method to simulate rays bouncing through arbitrary scenes with moving receivers and/or objects,
 assuming all movement within the scene is known at time of calculation.
