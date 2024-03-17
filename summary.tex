@@ -1,1 +1,167 @@
 \chapter{Summary}\label{ch:Summary}
+
+As it stands, research on geometric acoustics simulation has only concerned itself with simulation of static scenes.
+While there are a few attempts at allowing simulation of moving or dynamic scenes,
+they either only concern themselves with moving emitters and receivers
+(such as the numeric approach by Raghuvanshi et al.~\cite{RS10})
+or don't attempt to simulate a full room's acoustics (such as Bilibashi et al.~\cite{BVD20}).
+\newline
+The only attempts at simulating moving scenes work around this lack of research by not actually simulating a moving scene.
+Instead, for each distinct point in time, a static copy of the scene is created,
+through which rays are then bounced.
+Since this involves a snapshot of the scene, this method is called the snapshot method in this thesis.
+\newline
+The snapshot method comes with the advantage that it can make use of all the optimisations and research done for static scenes,
+without having to change any of it.
+This allows for fast simulation to a point where Chandak et al.~were able to run such a simulation of a dynamic scene in real time~\cite{Cha08}.
+While this approach is thus usable for games and similar use cases where full realism is not the goal,
+it comes with a few flaws that prevent it from creating a fully realistic simulation,
+some of which are resolved in this thesis.
+\newline
+The major problem addressed in this thesis is the fact that this snapshot method assumes that in the time a ray takes to travel,
+no object in the scene moves by a significant distance.
+In many cases, this assumption holds true:
+In order to significantly change position while a ray is bouncing through the scene,
+an object would need to move at a speed within one, maybe two orders of magnitude from the wave propagation speed.
+In computer graphics, the field where ray tracing is most commonly used,
+this is never the case as light travels several orders of magnitude faster than any human-made object ever has.
+Even in acoustics simulation, getting within a range where an object's speed becomes significant to sound
+requires movements faster than 100km/h, which don't happen in most cases to be simulated.
+\newline
+% TODO include these formulae in intersection.tex
+The simplest case where this assumption fails is if a receiver approaches a sound emitter at a comparably high speed.
+Using the snapshot method, if the receiver starts at a distance \(d\) away from the emitter,
+the sound will first start arriving at the emitter once the ray has travelled this entire distance,
+so with a propagation speed \(c\) that response time becomes \(t = \frac{d}{c}\).
+In the real world, the receiver would already clear part of \(d\) while the sound wave is travelling towards it.
+If the receiver travels at a velocity \(v\), the response time then becomes \(t = \frac{d}{c + v}\).
+If \(v\) is 1/9th the speed of sound (137.2 km/h),
+the response time is already reduced by 10\%, a difference well audible to the human ear.
+\newline
+To resolve this issue, the logic to check for intersections between rays and objects needs to be adapted.
+The intersection check equations for static scenes are simple:
+Object primitives \(S\) are described by an equation involving a point \(p\).
+The equation holds true for all \(p\) that are on the surface of \(S\).
+The formula describing a ray \(R\)'s position in the scene at any time \(t\) is then injected in place of \(p\)
+before then solving this equation for \(t\).
+If the equation has a solution, the ray and the object intersect at the result time \(t\),
+assuming that no intersection happens before it and that the intersection does not happen before the ray's launch time \(t_0\).
+\newline
+Depending on the type of object primitive,
+further checks may need to be run to determine if an intersection point actually is inside the object.
+For example, the equation for a triangle usually only describes the plane the triangle is in.
+To ensure a point is actually inside the triangle,
+another check needs to be run using the point's barycentric coordinates for the triangle.
+\newline
+In order to allow for movement of objects,
+the initial equation needs to be changed to also become dependent on time.
+A common method for this also used in animation is keyframe interpolation:
+An object is described by a set of keyframes, each of which holds data describing the object at a specific time.
+The data for times inbetween those keyframes is gathered from the keyframes around it.
+There are a variety of methods for interpolation between keyframes,
+some such as linear interpolation (used for the examples and proof-of-concept for this thesis) being simpler,
+others such as various spline methods more complicated.
+\newline
+Depending on the interpolation method used, the equation for an object changes.
+For linear interpolation,
+the equation for a point \(P_{n, t}\) used to describe a surface at a time \(t\) between two keyframes \(k_1\) and \(k_2\),
+each holding information about their respective version of the point \(P_{n, k_1}\) and \(P_{n, k_2}\)
+as well as their time \(t_{k_1}\) and \(t_{k_2}\)
+would for example be \(P_{n, t} = m \cdot P_{n, k_1} + (1-m) \cdot P_{n, k_2}\),
+with \(m = \frac{t_{k_2} - t}{t_{k_2} - t_{k_1}}\).
+For other interpolation methods using only the two keyframes around a given time,
+the same equation can be used, just using a different formula for \(m\).
+For interpolation methods using more than those two keyframes,
+the entire formula for \(P_{n, t}\) will differ.
+\newline
+This equation for points can then be substituted in place of the static version of the same points,
+resulting in a new function describing the primitive.
+Note that this equation will then vary for each pair of keyframes,
+meaning that separate intersection checks need to be run for the time spans between each pair of keyframes.
+\newline
+After creating this new object equation, the ray formula can again be substituted into it,
+allowing resolution of the equation for intersection time \(t\).
+Note that resolving these equations will become more complicated:
+With static checks, \(t\) only appears in the equation once.
+As the object equation is now also a function of \(t\),
+the new equation will contain multiple occurrences of \(t\),
+potentially leading to a harder to resolve function.
+\newline
+As a side effect of this,
+the resulting function will no longer be a simple linear equation.
+Instead, the type of the resulting equation depends on the interpolation mode used.
+For linear interpolation, this will usually be a higher-degree polynomial:
+The intersection check for spheres becomes a second-degree polynomial,
+the one for surfaces a third-degree one.
+\newline
+This increased equation complexity comes with several side effects:
+Firstly, a more complicated equation means that the equation can have more than a single root.
+For intersection checks, this means that after eliminating all invalid roots,
+only the lowest valid root is the actual intersection time,
+as all later intersections would only happen if the ray didn't bounce off of the first surface.
+\newline
+Eliminating all invalid roots entails the same checks as before,
+meaning that roots from before the ray's starting time are discarded
+and that other logic such as the one potentially described for triangles needs to be run.
+It also includes some new checks,
+as each equation only describes the object for the time frame described by its keyframes.
+If a root is outside of this time frame,
+it must also be discarded as the object's position is not known.
+If that root would be valid,
+it will also appear in the intersection equation using the keyframes relevant to the root's time.
+Additionally, since more complicated equations can yield complex numbers as a result,
+all roots with an imaginary part can be discarded immediately.
+\newline
+Furthermore, the computation time required to run an intersection check
+balloons up by a large amount as solving a higher degree polynomial (or other more complicated function)
+is much more complicated than solving a linear equation.
+This cost increase becomes notable in practice, where for the example scenes used for this thesis,
+using interpolating intersection checks increased computation time by a factor of 12 to 17.
+\newline
+This increase in turn means that intersection checks need to be reduced as much as possible.
+A common solution for this in static scenes is to separate objects by their position,
+then only run intersection checks with objects whose position the ray can reach in the first place.
+\newline
+In general, there are two classes of this kind of solution:
+The first, bounding volume hierarchies (BVHs), work by encapsulating each object into a simpler primitive called a bounding volume,
+then combining those bounding volumes in a tree structure,
+which a ray then walks down, eliminating branches if it doesn't intersect with their bounding volume.
+The other method called chunking separates a scene into a grid of chunks,
+each of which holds information about which objects are inside it.
+Rays then traverse through these chunks and only check for intersections with the objects in the chunks they reach.
+\newline
+To efficiently work with moving scenes,
+these methods need to be adapted to store separate positions for objects in different time frames.
+This becomes impractical with BVHs as all objects would need to share the time frames
+into which they separate their bounding volumes in order to be able to establish a hierarchy.
+\newline
+Chunks, in turn, can easily be adapted:
+Instead of only storing a list of objects inside the chunk,
+the list entries need to also contain an entry and exit time.
+The latter can be empty if the object does not leave the chunk after entering it,
+both can be empty if the object never moves.
+\newline
+The logic to fill the chunks with data, in turn, also needs to be adapted:
+Instead of simply calculating the chunks an object is in once for each object,
+the best approach is to walk through the object's keyframes pairwise,
+detecting the times inbetween those keyframes where the chunks the object is in changes
+and writing the object to the relevant chunks in the time frames between those changes.
+The detection of these change times can be done using an approach similar to binary search,
+splitting up the time between keyframes into smaller parts repeatedly
+until the object's chunks stop changing over the course of a part.
+\newline
+Algorithms used to model traversal through chunks also need to be adapted accordingly
+because in order to determine which objects to run intersection checks with,
+the time at which a ray enters and exits each chunk needs to be known.
+\newline
+Two major changes are needed:
+Firstly, in addition to (or instead of) keeping track of the distance a ray has travelled between chunks,
+the time that has elapsed between the ray launching and it moving from one chunk to the next needs to be tracked.
+This is because secondly, instead of calculating the next chunk the ray will enter and then running the intersection checks for it,
+intersection checks need to be run for the chunk the ray is leaving, as the exit time is then known.
+\newline
+Most if not all chunk traversal algorithms should be adaptable by this scheme.
+\newline
+Note that this is still not sufficient for a complete simulation of moving scenes:
+The physical forces caused by moving objects and the effect they have on sound waves are entirely ignored.
+Exploring and simulating those effects requires further research.
