@@ -143,37 +143,25 @@ but works with any arbitrary scene.
         \hline
         Run        & Snapshot 1 & Snapshot 2 & Snapshot 3 & Interp. 1 & Interp. 2 & Interp. 3 \\
         \hline
-        Time       & 0:22:35    & 0:22:21    & 0:22:22    & 4:36:24   & 4:21:59   & 4:22:34   \\
+        Time       & 0:22:29    & 0:22:33    & 0:22:35    & 4:30:51   & 4:13:41   & 4:12:56   \\
         \hline
-        \(T_{60}\) & 5.23s      & 5.16s      & 5.19s      & 5.23s     & 5.27s     & 5.22s     \\
+        \(T_{60}\) & 5.18s      & 5.27s      & 5.22s      & 5.26s     & 5.18s     & 5.22s     \\
         \hline
     \end{tabular}
     \caption{Rotating Cube Test Results}\label{tbl:CubeSceneTable}
 \end{table}
-
+There is very little difference in the reverberation time \(T_{60}\) between the snapshot and interpolated version of this scene.
+This was to be expected:
+The distance a ray has to travel to go from one end of the room to the other hardly changes between the rotating and static version of the room.
+Since the angle at which a ray bounces becomes insignificant as reflections become diffuse over time,
+there is no significant difference between the snapshot (static) and interpolated (non-static) version of the cube scene.
+\newline
 \begin{figure}[t!]
     \begin{center}
         \input{images/partial_cube_compare.pgf}
     \end{center}
     \caption{The first 5000 samples of the energetic response for the rotating cube scene and snapshot/interpolated simulation, respectively}\label{fig:CubeSceneIR}
 \end{figure}
-
-There is very little difference in the reverberation time \(T_{60}\) between the snapshot and interpolated version of this scene.
-This was to be expected: Since the distance sound travels from wall to wall hardly changes for a rotating scene
-and the angle it bounces at becomes insignificant as the reflection becomes more diffuse over time,
-the late reverberation in the scene becomes almost the same.
-In the interpolated simulation, \(T_{60}\) is slightly higher,
-so the reverberation rings out for slightly longer.
-\newline
-As rays still lose the same amount of energy per bounce
-and thus take the same amount of bounces until their energy is depleted,
-this implies rays take a longer time between bounces on average,
-which in turn means they generally travel a longer distance between bounces.
-\newline
-This could partially be due to a bounce into a corner,
-which would normally make for two bounces off each side of the corner,
-becoming a single bounce as the other side of the corner moves out of the way before a ray can reach it.
-\newline
 % TODO image
 \autoref{fig:CubeSceneIR} shows that the early reflections are practically identical between the snapshot and interpolated method.
 This is due to the emitter and receiver being on the scene's rotation axis,
@@ -214,9 +202,9 @@ This presumably leads to them coming back to the receiver earlier, creating the 
         \hline
         Run        & Snapshot 1 & Snapshot 2 & Snapshot 3 & Interp. 1 & Interp. 2 & Interp. 3 \\
         \hline
-        Time       & 0:24:10    & 0:24:11    & 0:23:48    & 7:00:35   & 7:00:56   & 7:00:14   \\
+        Time       & 0:23:59    & 0:24:03    & 0:24:02    & 6:48:14   & 6:46:50   & 6:47:22   \\
         \hline
-        \(T_{60}\) & 5.31s      & 4.98s      & 4.99s      & 5.07s     & 5.35      & 5:44      \\
+        \(T_{60}\) & 5.15s      & 5.29s      & 4.99s      & 5.26s     & 5.41s     & 5:24s     \\
         \hline
     \end{tabular}
     \caption{Rotating L-Shaped Room Test Results}\label{tbl:LSceneTable}
