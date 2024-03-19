@@ -1,1 +1,164 @@
 \chapter{Fundamentals}\label{ch:Fundamentals}
+
+In order to be able to make use of the findings in this thesis,
+A basic understanding of ray tracing both in general as well as in the context of acoustics simulation is required.
+This chapter will provide a summary of the base idea of ray tracing
+before then introducing specific concepts relevant to acoustics.
+
+\section{Ray Tracing}\label{sec:FundamentalRT}
+
+Both sound and light are generally known to be waves bouncing from wall to wall.
+They start out from some emitter such as a loudspeaker and can eventually,
+after bouncing off walls for any number of times, arrive at a receiver such as a microphone or an ear.
+Ray tracing attempts to model this process of waves bouncing by splitting a wave into many individual rays,
+each launched from the wave's emitter in a direction the wave would travel in too.
+Most audio ray tracers assume emitters emit sound uniformly in all directions,
+thus allowing them to simply launch each ray in a randomised direction.
+\newline
+Each ray's journey through the scene is then individually simulated
+by calculating which object it will next intersect with,
+then calculating the intersection point and the direction the ray will bounce off the object in.
+Then, a new ray in the resulting direction is launched from this intersection point and the process is repeated
+until some ending condition applies, at which point the ray is terminated.
+If the ray intersects with a receiver object, the according information gets stored.
+For acoustics, this is usually the intersection time and the energy the ray still had at intersection time.
+Depending on the domain, the ray is then terminated or continues bouncing by passing through the receiver.
+For acoustics, the latter behaviour is usually used.
+\newline
+Intersection checks are usually done by modelling objects using an equation that describes whether a point is on the object surface or not,
+then injecting the ray's function into that equation and resolving.
+With static objects, this check is trivial:
+The only parameter to resolve for is the intersection time \(t\), and said parameter only occurs in the ray function,
+usually making for a first-degree polynomial function.
+\newline
+As an example, a surface \(S\) can be modelled using a point \(P_1\) on it as well as its normal \(n\).
+Then, to tell if any point \(p\) is on \(S\), the vector from \(P_1\) to \(p\) can be compared to \(n\).
+If they're orthogonal to each other (thus their dot product is 0), \(p\) is on \(S\):
+
+\begin{equation}\label{StaticSurface}
+    (p - P_1) \cdot n = 0
+\end{equation}
+
+For a polygon defined by its corner points \(P_{1}\) to \(P_{m}\), the same equation can be used,
+with the difference that \(n\) needs to be determined from a set of at least three of the points.
+The cross product of two vectors is always orthogonal to both vectors, so using three points \(P_{1}\) through \(P_{3}\),
+\(n\) can be determined as
+
+\begin{equation}\label{PolygonNormal}
+    n = (P_{2} - P_{1}) \times (P_{3} - P_{1})
+\end{equation}
+
+Additionally, a polygon needs to further check whether \(p\) is actually inside the bounds defined by its corners.
+For triangles, this can be done using barycentric coordinates.
+\newline
+Barycentric coordinates describe a point on a triangle (or another simplex) by separating a triangle into three parts,
+each with the given point and two corners of the triangle as its vertices.
+Each coordinate then describes the relative size of that triangle with respect to the full triangle.
+% TODO barycentric coords image
+\newline
+Thus, each point inside the triangle can be described by coordinates \((\alpha, \beta, \gamma)\),
+with \(0 \le \alpha \le 1\), \(0 \le \beta \le 1\), \(0 \le \gamma \le 1\) and \(\alpha + \beta + \gamma = 1\).
+If these conditions do not apply to \(p\), it is outside the triangle.
+\newline
+The naive way to calculate barycentric coordinates would be to calculate the areas of \(P_1P_2p\), \(P_1P_3p\), \(P_2P_3p\) and
+divide them by the area of \(P_1P_2P_3\)~\cite{SM09}:
+\begin{verbatim}
+    normal = cross((p3 - p1), (p2 - p1));
+    p1p2p = dot(normal, cross((p1 - p), (p2 - p)));
+    p1p3p = dot(normal, cross((p3 - p), (p1 - p)));
+    p2p3p = dot(normal, cross((p2 - p), (p3 - p)));
+    p1p2p3 = p1p2p + p1p3p + p2p3p;
+    alpha = p2p3p / p1p2p3;
+    beta = p1p3p / p1p2p3;
+    gamma = p1p2p / p1p2p3;
+\end{verbatim}
+This can be simplified by only computing two of the barycentric coordinates
+and calculating the last one from the first two instead; if \(\alpha\) and \(\beta\) have already been computed,
+\(\gamma = 1 - \alpha - \beta\). This saves a division operation.
+For further optimisation, the Lagrange identity \((a \times b) \cdot (c \times d) = (a \cdot c)(b \cdot d) - (a \cdot d)(b \cdot c)\)
+can be used to replace the cross products with dot products, as shown by Ericson~\cite{Er04}.
+\newline
+In order to calculate the intersection point \(p\), the equation describing a ray then needs to be injected into the surface equation.
+A ray \(R\)'s position at time \(t\), with \(R\) starting at the point \(P\) at time \(t_0\)
+and travelling in the direction \(v\) can be defined as follows:
+
+\begin{equation}\label{RayEq}
+    R(t) = P + (t - t_0) \cdot v
+\end{equation}
+
+This equation can then be injected into the equation describing the primitive and resolved.
+As an example, using~\eqref{StaticSurface}, this calculation goes as follows:
+
+\begin{equation*}
+    (P + (t - t_0) \cdot v - P_1) \cdot n = 0
+\end{equation*}
+\begin{equation}\label{StaticSurfaceIntersect}
+    t = \frac{(P_1 + t_0 \cdot v - P) \cdot n}{v \cdot n}
+\end{equation}
+
+If \(t\) exists and is greater than \(t_0\),
+the point \(p = R(t)\) describes the intersection point and can be used for further checks
+as well as bouncing.
+\newline
+The bouncing direction can be determined in a number of ways,
+depending on the surface and how it reflects waves.
+The easiest to understand behaviour is specular reflection,
+where angle of incidence equals angle of departure -
+i.e. a ray bounces off of a surface in the same angle it approached it at,
+such as when light bounces off a perfect mirror.
+The specularly reflected direction \(r\) can be calculated from the inbound direction \(i\) and the surface normal \(n\) as
+\begin{equation}
+    r = i - (2 \cdot i \cdot n) \cdot n
+\end{equation}
+% TODO link
+Different reflection modes will be discussed in \autoref{sec:FundamentalAcoustics} as they are usually domain dependent
+and not important for a general understanding of ray tracing.
+\newline
+Alongside the launch position and direction,
+rays usually store the energy or colour information they represent in some form.
+This information tends to get altered with each bounce -
+For acoustics simulation, the ray's energy simply gets decremented depending on the bouncing material.
+% TODO link
+This too will be elaborated on in \autoref{sec:FundamentalAcoustics}.
+\newline
+This stored energy can be used as an ending condition:
+Once the ray's energy goes below a certain threshold,
+the ray is terminated as any energy it carries becomes insignificant.
+Other domains, where the ray's stored data cannot fully be used to determine its relevance,
+use other ending conditions.
+One simple condition often seen in computer graphics is bounce count:
+Each ray also counts the amount of times it already bounced.
+Once a specified threshold of bounces is reached, the ray is discarded.
+
+\section{Acoustics Simulation}\label{sec:FundamentalAcoustics}
+
+The goal of acoustics simulation is to get a picture of when sound waves arrive at a receiver and with what amount of energy.
+A simulation creates either an impulse or energetic response,
+which can in turn be used to determine acoustic properties of the room
+or applied to a sound recording in order to simulate it being recorded in this room.
+The latter process is called `auralization'.
+\newline
+One common measure for room properties is the reverberation time \(T_{60}\),
+defined as the point after which the impulse/energetic response is consistently at least 60 decibels quieter than the initial signal.
+This can be used as a metric to determine how long a sound will take to ring out in a room.
+\newline
+Another useful measure is the sound clarity \(C_{50}\)~\cite{AB18}~\cite{PMG22},
+comparing the reverberation's first 50 milliseconds' worth of sound energy to the remainder of the reverberation.
+\(C_{50}\) as a metric is based on the idea that for speech,
+any reflections of the sound arriving more than 50 milliseconds later than the first response are harming intelligibility,
+whereas signal arriving within that 50 millisecond window is helpful in making speech more understandable.
+Thus, a higher \(C_{50}\) means that speech is easier to understand under the room's acoustic conditions.
+\newline
+For a known energetic response \(e_m, 0 \le m < o\), where each \(m\) represents one sample of the response and there are a total of \(o\) samples,
+and a sample rate \(f\), \(C_{50}\) can be calculated as
+
+\begin{equation}
+    C_{50} = 10 \cdot \log_{10} \left( \frac{\displaystyle\sum_{m=0}^{50 \cdot f - 1}e_m}{\displaystyle\sum_{m=50 \cdot f}^{o}e_m} \right) dB
+\end{equation}
+
+The impulse response itself can usually be divided into three parts:
+`direct sound' is the part of the sound wave that can immediately travel from emitter to receiver without bouncing off of a wall,
+the `early reflections' are early, not yet diffuse echoes
+and the remaining diffuse hall ringing out is called `late reverberation'.
+\(C_{50}\) can be imagined as comparing the direct sound with the early reflections and late reverberation,
+as the latter two will worsen speech intelligibility.

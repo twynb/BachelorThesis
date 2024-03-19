@@ -1,85 +1,11 @@
 \chapter{Bouncing Rays Through Moving Scenes}\label{ch:Intersection}
 
 To bounce a ray through a scene, checks need to be performed to know which objects it intersects with and thus bounces off of.
-These checks are usually done by modelling objects using an equation that describes whether a point is on the object surface or not,
-then injecting the ray's function into that equation and resolving.
-With static objects, this check is trivial:
-The only parameter to resolve for is the intersection time \(t\), and said parameter only occurs in the ray function,
-usually making for a first-degree polynomial function.
-\newline
-As an example, a surface \(S\) can be modelled using a point \(P_1\) on it as well as its normal \(n\).
-Then, to tell if any point \(p\) is on \(S\), the vector from \(P_1\) to \(p\) can be compared to \(n\).
-If they're orthogonal to each other (thus their dot product is 0), \(p\) is on \(S\):
-
-\begin{equation}\label{StaticSurface}
-    (p - P_1) \cdot n = 0
-\end{equation}
-
-For a polygon defined by its corner points \(P_{1}\) to \(P_{n}\), the same equation can be used,
-with the difference that \(n\) needs to be determined from a set of at least three of the points.
-The cross product of two vectors is always orthogonal to both vectors, so using points \(P_{1}\) through \(P_{3}\),
-\(n\) can be determined as
-
-\begin{equation}\label{PolygonNormal}
-    n = (P_{2} - P_{1}) \times (P_{3} - P_{1})
-\end{equation}
-
-Additionally, a polygon needs to further check whether \(p\) is actually inside the bounds defined by its corners.
-For triangles, this can be done using barycentric coordinates.
-\newline
-Barycentric coordinates describe a point on a triangle (or another simplex) by separating a triangle into three parts,
-each with the given point and two corners of the triangle as its vertices.
-Each coordinate then describes the relative size of that triangle with respect to the full triangle.
-% TODO barycentric coords image
-\newline
-Thus, each point inside the triangle can be described by coordinates \((\alpha, \beta, \gamma)\),
-with \(0 \le \alpha \le 1\), \(0 \le \beta \le 1\), \(0 \le \gamma \le 1\) and \(\alpha + \beta + \gamma = 1\).
-If these conditions do not apply to \(p\), it is outside the triangle.
-\newline
-The naive way to calculate barycentric coordinates would be to calculate the areas of \(P_1P_2p\), \(P_1P_3p\), \(P_2P_3p\) and
-divide them by the area of \(P_1P_2P_3\)~\cite{SM09}:
-\begin{verbatim}
-    normal = cross((p3 - p1), (p2 - p1));
-    p1p2p = dot(normal, cross((p1 - p), (p2 - p)));
-    p1p3p = dot(normal, cross((p3 - p), (p1 - p)));
-    p2p3p = dot(normal, cross((p2 - p), (p3 - p)));
-    p1p2p3 = p1p2p + p1p3p + p2p3p;
-    alpha = p2p3p / p1p2p3;
-    beta = p1p3p / p1p2p3;
-    gamma = p1p2p / p1p2p3;
-\end{verbatim}
-This can be simplified by only computing two of the barycentric coordinates
-and calculating the last one from the first two instead; if \(\alpha\) and \(\beta\) have already been computed,
-\(\gamma = 1 - \alpha - \beta\). This saves a division operation.
-For further optimisation, the Lagrange identity \((a \times b) \cdot (c \times d) = (a \cdot c)(b \cdot d) - (a \cdot d)(b \cdot c)\)
-can be used to replace the cross products with dot products, as shown by Ericson~\cite{Er04}.
-\newline
-In order to calculate the intersection point \(p\), the equation describing a ray then needs to be injected into the surface equation.
-A ray \(R\)'s position at time \(t\), with \(R\) starting at the point \(P\) at time \(t_0\)
-and travelling in the direction \(v\) can be defined as follows:
-
-\begin{equation}\label{RayEq}
-    R(t) = P + (t - t_0) \cdot v
-\end{equation}
-
-This equation can then be injected into the equation describing the primitive and resolved.
-As an example, using~\eqref{StaticSurface}, this calculation goes as follows:
-
-\begin{equation*}
-    (P + (t - t_0) \cdot v - P_1) \cdot n = 0
-\end{equation*}
-\begin{equation}\label{StaticSurfaceIntersect}
-    t = \frac{(P_1 + t_0 \cdot v - P) \cdot n}{v \cdot n}
-\end{equation}
-
-If \(t\) exists and is greater than \(t_0\),
-the point \(p = R(t)\) describes the intersection point and can be used for further checks
-as well as bouncing.
-\newline
-Existing tools use this same method for intersection checks when simulating dynamic or moving scenes.
+The general method for these intersection checks for static scenes have been established in \autoref{sec:FundamentalRT}.
+Existing tools and research use this same method for intersection checks when simulating dynamic or moving scenes.
 A snapshot copy of the scene at the time a ray is launched is made,
 then intersection checks and bouncing logic use this static scene.
-This approach to moving scenes will be called the Snapshot approach.
+This approach to moving scenes will be called the Snapshot approach in this thesis.
 \newline
 This snapshot approach comes with a few advantages:
 The simple and well-optimised intersection logic from static scenes can be used without changes.
