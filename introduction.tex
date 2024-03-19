@@ -102,8 +102,9 @@ The following chapters cover new research based on these fundamentals.
 \newline
 % capitalisation workaround
 \hyperref[ch:Intersection]{Chapter~\ref*{ch:Intersection}} then focuses on the expanded logic required to bounce rays through moving scenes.
-This involves deriving new equations to check for intersections with moving objects.
-The performance cost of these new checks is compared to that for static objects.
+This involves deriving new equations to check for intersections with moving objects,
+and developing a method to derive such equations for any arbitrary object primitive.
+The performance cost of these new checks is briefly compared to that for static objects.
 \newline
 To alleviate part of this cost, in \autoref{ch:Chunks},
 a commonly used optimisation that divides a scene into separate chunks
@@ -119,6 +120,9 @@ For \autoref{ch:Evaluation}, a proof-of-concept implementation of the methods pr
 and compared to an implementation based on static scenes.
 This evaluation is both looking at changes in simulation quality and performance from the static methods to the newly developed ones
 as well as seeing where the logic proposed in this thesis still falls short and requires further research.
+\newline
+The newly researched and developed methods for acoustics simulation are briefly summarized in \autoref{ch:Summary}.
+This chapter provides enough knowledge to understand this thesis' findings without going into detail.
 \newline
 \hyperref[ch:Outlook]{Chapter~\ref*{ch:Outlook}} provides some insight into what further research could entail,
 and how the simulation of moving scenes might need to be adapted in order to become realistic.
