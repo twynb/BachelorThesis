@@ -94,14 +94,20 @@ fully known at runtime.
     \caption{Difference between ray travelling distance using the newly developed interpolating method (top) as opposed to the snapshot method (bottom). In the interpolated version, the ray only travels part of the distance as the receiver travels the remainder.}\label{im:SnapshotExplain}
 \end{figure}
 The major downside of this snapshot approach is that it tends to introduce errors when objects or receivers move at high speeds.
-As a simple example case, take the scene described in~\ref{im:SnapshotExplain}:
-A receiver starts 343 meters away from an emitter and moves towards it at 1/9th the speed of sound, roughly 38 meters per second
-(137.2 kilometers per hour, a speed most modern cars can reach without problems).
+Take an example case of a sound receiver moving towards a sound emitter, as shown in~\ref{im:SnapshotExplain}:
+If the receiver starts at a distance \(d\) away from the emitter and sound travels at a speed \(c\),
+the intersection time \(t\) becomes \(t = \frac{d}{c}\) as the receiver's movement is ignored.
+In actuality, if the receiver moves at a speed \(v\), the calculation for the real \(t\) would be \(t = \frac{d}{c+v}\).
 \newline
-Using the snapshot approach, a ray traveling directly from emitter to receiver would arrive after travelling the full 343 meters,
+As an example case, say that \(d = 343.2m, c = 343.2 m/s, v = c/9 = 38.0\bar{2} m/s\)
+(read: The receiver starts 1 second of travel at the speed of sound away from the emitter
+and moves towards it at 1/9th the speed of sound).
+\newline
+Using the snapshot approach, a ray traveling directly from emitter to receiver would arrive after travelling the full 343.2 meters,
 taking 1 second for it to arrive at the receiver.
 In actuality, in the time the ray takes to travel the first 90\% of that distance,
-the receiver has already travelled the remaining 10\%, making for a response time of 0.9 seconds rather than 1 second.
+the receiver will have already travelled the remaining 10\%,
+making for a response time of \(t = \frac{343.2}{381.\bar{2}} = 0.9s\).
 \newline
 To avoid this issue, new intersection logic that takes objects' movements into account is needed.
 This check becomes more complicated than its static counterpart as the equation describing the object still needs to be resolved for \(t\),
@@ -283,7 +289,7 @@ with
 \end{equation}
 
 If \(r\) also needs to be varied between keyframes,
-replace \(r^2\) with the according interpolated value \((m - r_{k_1} + (1-m) r_{k_2})^2\) and resolve accordingly.
+replace \(r^2\) with the interpolated version \({(m - r_{k_1} + (1-m) r_{k_2})}^2\) and resolve accordingly.
 \newline
 The real roots of~\eqref{SpherePoly} represent all times at which the sphere and ray would theoretically intersect.
 Note that all roots \(t\) where \(t < t_{k_1}\) or \(t > t_{k_2}\) must be discarded
@@ -294,8 +300,6 @@ behind its starting location.
 Of the roots remaining after this filter, the lowest result for \(t\) is the one where the ray and sphere intersect,
 assuming the ray does not bounce off of a different object before that.
 The coordinates at which the intersection takes place can be calculated by calculating \(R(t)\).
-
-% TODO find case where d2=d1=d0=0
 
 \section{Intersection Checks for Surfaces}\label{sec:IntersectSurface}
 

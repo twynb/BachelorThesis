@@ -94,23 +94,37 @@ the resulting frequency can be calculated as
 % TODO image of sound waves
 As expected, the first effect can be observed in the interpolated version of the simulation,
 but not in the simulation using the snapshot method.
-\newline
 This is because for the snapshot method,
 only the initial position of the receiver is relevant to the distance a ray needs to travel until it arrives at said receiver.
-Thus, the ray has to travel the full 343.2 meters for the initial impulse response, as shown in \ref{im:SnapshotExplain}.
-\newline
+Thus, the ray has to travel the full 343.2 meters for the initial impulse response, as shown in~\autoref{im:SnapshotExplain}.
 The interpolated version instead takes this effect into account correctly.
 \newline
+% TODO number formatting
 One notable detail is that the interpolated method also simulates the doppler effect more accurately.
-The resulting signal from the interpolated method exactly matches the \(488.\bar{8} Hz\) calculated in \eqref{eq:Doppler},
+The resulting signal from the interpolated method exactly matches the \(488.\bar{8} Hz\) calculated in~\eqref{eq:Doppler},
 while the snapshot method instead arrives at a frequency of approximately \(495 Hz\).
-% TODO explanation
 \newline
-Additionally, the snapshot method implementation has the overhead of re-calculating
-the chunks for each snapshot scene.
-This is insignificant in simulations where many rays are used
-as the chunk calculation cost is small by comparison,
-but for this single-ray simulation, the overhead evens out the performance gained from having a cheaper intersection calculation.
+This difference in frequency can be explained by a difference in the actual travelling distance:
+In the snapshot method, the receiver first receives signal after 1 second,
+with the final bit of signal arriving at 1.9 seconds.
+For the interpolated simulation, those numbers are 0.9 seconds and 1.8 seconds respectively.
+The signal is thus heard for 0.9 seconds for both receivers.
+\newline
+Where the receivers' behaviour differs is in the distance they travel in the meantime:
+The interpolated method's receiver first starts getting a signal after having travelled for \(34.22\) meters,
+with it receiving the last signal after a \(68.44\) meter travel distance,
+meaning it moved for a total of \(34.22\) meters over the course of receiving this signal.
+Since the snapshot method doesn't take receiver movement into account,
+the first signal is received after 0 meters of travel distance,
+with the final part arriving after \(38.0\bar{2}\) meters of travel distance.
+\newline
+The difference in travel speed thus explains the difference in frequency shift,
+seeing as the doppler effect directly relates to velocity.
+The snapshot method's result is physically impossible:
+If the frequency is shifted higher up,
+the pitched-up signal would last shorter than it does with the real pitch shift.
+\newline
+This goes to show that the interpolated method does help to eliminate this class of error from simulation of moving scenes.
 \newline
 A noteworthy implementation detail becomes apparent from the waveform resulting from the simulation:
 As the input signal is a single sine wave and the doppler effect would only raise its frequency,

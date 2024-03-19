@@ -219,8 +219,7 @@ When using chunks, shooting rays no longer simply entails checking for intersect
 Instead, the traversal of the ray through the separate chunks is modelled,
 then intersection checks are performed for the objects in each chunk the ray enters.
 \newline
-% TODO cite
-Many algorithms have been developed to model rays moving from one chunk to the next.
+Many algorithms have been developed to model rays moving from one chunk to the next~\cite{CW88}~\cite{FI85}~\cite{HT92}.
 Most of them keep track of the chunk the ray is in as well as the distance the ray has already travelled in one form or another.
 Adapting them to time-based chunks thus requires also keeping track of the time that has elapsed additionally to,
 or instead of, the travel distance.
