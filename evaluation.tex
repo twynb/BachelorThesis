@@ -72,6 +72,17 @@ is 0.02, meaning that a ray retains 98\% of its energy after bouncing.
 Data for diffusion coefficients is not publicly available, so by guesswork, a value of 0.1 was used,
 meaning that 90\% of the energy is specularly reflected, while 10\% is diffusely reflected.
 In practice, this means that rays have a 10\% chance to bounce in a random direction rather than reflecting off the surface normally.
+\newline
+Rays get discarded once their energy has decreased by six orders of magnitude,
+which translates to their energy being at least 60 decibels quieter than the original sound.
+This means that \(T_{60}\) equals the length of the impulse response.
+The clarity \(C_{50}\) is calculated from the impulse response using the logic from \ref{eq:C50}
+in a separate python script.
+The initial silence before direct sound arrives at the receiver is ignored for this calculation.
+Note that all \(C_{50}\) values for the test scenes are very low compared to real-world rooms.
+This is because all the test scenes are large, empty rooms,
+the walls of which have a rather low absorption coefficient,
+leading to long late reverberation.
 
 \section{Approaching Receiver Scene}
 
@@ -208,6 +219,10 @@ These rays thus only end up in the late reverberation part of the energetic resp
 As the angle of the walls changes as they rotate in the interpolated version,
 the angle these rays bounce at changes too.
 This presumably leads to them coming back to the receiver earlier, creating the later early reflections.
+\newline
+This second set of early reflections also explains the difference in sound clarity \(C_{50}\):
+Since these later reflections take place after the 50 millisecond mark,
+they worsen intelligibility, leading to a decreased clarity.
 
 \section{Rotating L-Shaped Room Scene}\label{sec:LRoom}
 
