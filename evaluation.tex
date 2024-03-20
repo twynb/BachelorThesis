@@ -114,24 +114,23 @@ only the initial position of the receiver is relevant to the distance a ray need
 Thus, the ray has to travel the full 343.2 meters for the initial impulse response, as shown in~\autoref{im:SnapshotExplain}.
 The interpolated version instead takes this effect into account correctly.
 \newline
-% TODO number formatting
 One notable detail is that the interpolated method also simulates the doppler effect more accurately.
 The resulting signal from the interpolated method exactly matches the \(488.\bar{8} Hz\) calculated in~\eqref{eq:Doppler},
 while the snapshot method instead arrives at a frequency of approximately \(495 Hz\).
 \newline
 This difference in frequency can be explained by a difference in the actual travelling distance:
-In the snapshot method, the receiver first receives signal after 1 second,
-with the final bit of signal arriving at 1.9 seconds.
-For the interpolated simulation, those numbers are 0.9 seconds and 1.8 seconds respectively.
+In the snapshot method, the receiver first receives signal after \(1s\),
+with the final bit of signal arriving at \(1.9s\).
+For the interpolated simulation, those numbers are \(0.9s\) and \(1.8s\) respectively.
 The signal is thus heard for 0.9 seconds for both receivers.
 \newline
 Where the receivers' behaviour differs is in the distance they travel in the meantime:
 The interpolated method's receiver first starts getting a signal after having travelled for \(34.22\) meters,
-with it receiving the last signal after a \(68.44\) meter travel distance,
-meaning it moved for a total of \(34.22\) meters over the course of receiving this signal.
+with it receiving the last signal after a \(68.44m\) travel distance,
+meaning it moved for a total of \(34.22m\) over the course of receiving this signal.
 Since the snapshot method doesn't take receiver movement into account,
-the first signal is received after 0 meters of travel distance,
-with the final part arriving after \(38.0\bar{2}\) meters of travel distance.
+the first signal is received after \(0m\) of travel distance,
+with the final part arriving after \(38.0\bar{2}m\) of travel distance.
 \newline
 The difference in travel speed thus explains the difference in frequency shift,
 seeing as the doppler effect directly relates to velocity.
