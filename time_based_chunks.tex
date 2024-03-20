@@ -394,7 +394,10 @@ function traverse_chunk(p, t_dimension, tlast) {
 }
 \end{verbatim}
 
-% TODO image
+\begin{figure}[t!]
+    \includesvg[width=\linewidth]{images/hit_after_chunk.svg}
+    \caption{An example for why intersections happening outside of the ray's current chunk need to be ignored.}\label{fig:HitAfterChunk}
+\end{figure}
 Intersections that are outside of the entry/exit time for the current chunk are discarded.
 This is to avoid errors when a ray would intersect with the given object in a chunk it will enter later,
 but would also hit another object before it.
@@ -403,6 +406,11 @@ but the object that would get hit later is,
 that later intersection would otherwise incorrectly be returned without ever checking for an intersection with the other object.
 This error can also occur with the original CW88 algorithm,
 but incidentally becomes easier to fix through this adaptation.
+\newline
+An example for this error can be found in \autoref{fig:HitAfterChunk}:
+The ray starts out in the same chunk as object 1 and thus checks for intersections with it.
+If the intersection with object 1 found in this check is used immediately,
+the intersection with object 2 happening in the next chunk would wrongly be ignored despite it happening before the ray hits object 1.
 \newline
 Simply discarding intersections outside the time the ray is within a chunk comes with the downside of duplicate calculations:
 If an object is inside three chunks the ray travels through, with the intersection happening in the last of those chunks,
