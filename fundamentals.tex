@@ -51,10 +51,16 @@ The cross product of two vectors is always orthogonal to both vectors, so using 
 Additionally, a polygon needs to further check whether \(p\) is actually inside the bounds defined by its corners.
 For triangles, this can be done using barycentric coordinates.
 \newline
+\begin{figure}[t!]
+    \begin{center}
+    \includesvg{images/barycentric.svg}
+    \end{center}
+    \caption{The barycentric coordinates of a point inside a triangle. Each coordinate is determined by the area of its subtriangle in relation to the whole triangle.}\label{fig:BarycentricExplain}
+\end{figure}
 Barycentric coordinates describe a point on a triangle (or another simplex) by separating a triangle into three parts,
 each with the given point and two corners of the triangle as its vertices.
-Each coordinate then describes the relative size of that triangle with respect to the full triangle.
-% TODO barycentric coords image
+Each coordinate then describes the relative size of that subtriangle with respect to the full triangle,
+as shown in \autoref{fig:BarycentricExplain}.
 \newline
 Thus, each point inside the triangle can be described by coordinates \((\alpha, \beta, \gamma)\),
 with \(0 \le \alpha \le 1\), \(0 \le \beta \le 1\), \(0 \le \gamma \le 1\) and \(\alpha + \beta + \gamma = 1\).
