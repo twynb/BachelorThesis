@@ -107,11 +107,11 @@ where angle of incidence equals angle of departure -
 i.e. a ray bounces off of a surface in the same angle it approached it at,
 such as when light bounces off a perfect mirror.
 The specularly reflected direction \(r\) can be calculated from the inbound direction \(i\) and the surface normal \(n\) as
-\begin{equation}
+\begin{equation}\label{eq:SpecularReflection}
     r = i - (2 \cdot i \cdot n) \cdot n
 \end{equation}
 % TODO link
-Different reflection modes will be discussed in \autoref{sec:FundamentalAcoustics} as they are usually domain dependent
+Different reflection modes will be discussed in \autoref{sec:FundamentalGA} as they are usually domain dependent
 and not important for a general understanding of ray tracing.
 \newline
 Alongside the launch position and direction,
@@ -119,7 +119,7 @@ rays usually store the energy or colour information they represent in some form.
 This information tends to get altered with each bounce -
 For acoustics simulation, the ray's energy simply gets decremented depending on the bouncing material.
 % TODO link
-This too will be elaborated on in \autoref{sec:FundamentalAcoustics}.
+This too will be elaborated on in \autoref{sec:FundamentalGA}.
 \newline
 This stored energy can be used as an ending condition:
 Once the ray's energy goes below a certain threshold,
@@ -156,9 +156,65 @@ and a sample rate \(f\), \(C_{50}\) can be calculated as
     C_{50} = 10 \cdot \log_{10} \left( \frac{\displaystyle\sum_{m=0}^{50 \cdot f - 1}e_m}{\displaystyle\sum_{m=50 \cdot f}^{o}e_m} \right) dB
 \end{equation}
 
-The impulse response itself can usually be divided into three parts:
+The impulse/energetic response of a room can usually be divided into three parts:
 `direct sound' is the part of the sound wave that can immediately travel from emitter to receiver without bouncing off of a wall,
 the `early reflections' are early, not yet diffuse echoes
 and the remaining diffuse hall ringing out is called `late reverberation'.
-\(C_{50}\) can be imagined as comparing the direct sound with the early reflections and late reverberation,
-as the latter two will worsen speech intelligibility.
+\newline
+The difference between an impulse and an energetic (or energy-time) response is the data being modelled.
+An energy-based model produces an energetic response \(p^2(t)\).
+This energy-time response is sufficient to make statements about a room's acoustics,
+but cannot be used for proper auralization as phase information is lost.
+The solution to this problem is provided by pressure-based models,
+where instead of the energy \(p^2\),
+the sound pressure \(p\) is computed as a complex number that also holds phase information.
+\newline
+As the energy response is the squared impulse response,
+converting from the latter to the former is trivial.
+The inverse conversion becomes more complicated as the phase information needs to be reconstructed,
+usually from the ray's travelling distance.
+\newline
+For simplicity's sake, this thesis will only focus on energy-based models.
+The concepts introduced can be equally applied to pressure-based models.
+
+\section{Geometric Acoustics Simulation}\label{sec:FundamentalGA}
+
+The changes to ray tracing specific to acoustics simulation mostly affect rays' bouncing behaviour.
+Firstly, when a ray bounces off of a surface,
+that surface will absorb part of the ray's energy.
+How much of the incoming energy is reflected depends on the surface's impedance
+as well as the angle of incidence \(\theta\).
+\newline
+For energy-based geometric acoustics, this is usually modelled through an absorption coefficient \(\alpha(\theta)\),
+which in turn can be calculated from a wall's plane-wave reflection coefficient \(R(\theta)\) often determined through measurement.
+Some systems simplify this to a single random incidence absorption coefficient \(\alpha_{rand}\)
+computed as the average of all possible incidence angles.
+\newline
+Another important factor of acoustics that needs to be modelled is the effect of uneven surfaces.
+Specifically, imperfections in a surface that are within the same order of magnitude as the wavelength greatly affect that surface's acoustic behaviour
+as not waves are then not fully reflected in a specular manner.
+These non-specular reflections are usually modelled in a simplified manner such as scattering coefficients.
+\newline
+The scattering coefficient, commonly noted as a number between 0 and 1, models the ratio of specularly to non-specularly reflected energy,
+splitting the signal into a specular and a diffuse component.
+A value of 0 means a perfectly even and specularly reflecting surface (like a perfect mirror for light),
+whereas 1 implies a fully diffuse reflection.
+\newline
+The distribution of this diffuse reflection is not specified by the scattering coefficient,
+so most systems simply assume a lambertian reflection model.
+\newline
+The naive way to implement this in a ray tracing system would be for a bounce to not just emit one new ray, but several,
+with one keeping the specular component's energy and being reflected specularly,
+while the diffuse component's energy is distributed among the remaining rays,
+which in turn are randomly spread across the hemisphere defined by the surface normal.
+This quickly becomes computationally expensive as the number of rays increases exponentially with each bounce.
+\newline
+In practice, to avoid the resulting performance problems,
+some systems (such as EAR~\cite{Th17}) generate a random number between 0 and 1 for each collision.
+If the scattering coefficient is greater than this random number,
+the ray is sent off into a random direction in the hemisphere defined by the surface's normal,
+otherwise it is reflected specularly as per \ref{eq:SpecularReflection}.
+As a high amount of rays is sent out into the scene,
+the result of this random distribution eventually matches the distribution defined by the scattering coefficient.
+This is not as accurate as splitting up rays,
+but usually accurate enough to be a justifiable optimisation.
