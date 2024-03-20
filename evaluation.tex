@@ -33,7 +33,8 @@ and the need for further research for realistic simulations.
 \section{Testing Conditions}
 
 Tests were performed on a stock AMD Ryzen 3600xt CPU with 16GB of 3200MHz DDR4 RAM.
-All 12 logical cores are used for parallel processing.
+All 12 logical cores are used for parallel processing
+and no other programs other than a shell for the program to run in (and Windows 10 background processes) were running to avoid needless interference.
 \newline
 The proof-of-concept used for testing was written in Rust, using the \verb|nalgebra| crate for algebra functions,
 \verb|roots| for polynomial solving and \verb|rayon| for parallelisation.
@@ -79,6 +80,7 @@ This means that \(T_{60}\) equals the length of the impulse response.
 The clarity \(C_{50}\) is calculated from the impulse response using the logic from \ref{eq:C50}
 in a separate python script.
 The initial silence before direct sound arrives at the receiver is ignored for this calculation.
+\newline
 Note that all \(C_{50}\) values for the test scenes are very low compared to real-world rooms.
 This is because all the test scenes are large, empty rooms,
 the walls of which have a rather low absorption coefficient,

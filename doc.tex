@@ -12,7 +12,7 @@
 %%\usepackage[utf8,latin1]{inputenc}  %% Alternative Eingabe
 \usepackage[ngerman, english]{babel}
 \usepackage[babel,german=quotes]{csquotes}
-\usepackage[backend=biber,maxnames=99,language=english,bibstyle=alphabetic,sortcites=true,labelalpha=true]{biblatex}
+\usepackage[backend=biber,maxnames=99,language=english,bibstyle=alphabetic,sortcites=true,labelalpha=true,style=alphabetic]{biblatex}
 \usepackage{hyperref}
 \usepackage{breakurl}
 %\usepackage[hyphenbreaks]{breakurl}  %% Falls in \url auch bei Bindestrich getrennt werden soll. Weitere Optionen: RTFM
@@ -39,7 +39,7 @@
 
 \pagenumbering{roman}
 
-%\bibliographystyle{galpha2a}
+%\bibliographystyle{amsalpha}
 \renewcommand*{\labelalphaothers}{\textsuperscript{}} %% plus-zeichen abschalten
 \bibliography{doc}
 \addbibresource{doc.bib}
