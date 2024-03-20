@@ -11,8 +11,11 @@ No other objects are in the scene.
 This is essentially the example described in \ref{im:SnapshotExplain}
 and is used to demonstrate the basic differences between interpolated and snapshot methods.
 \newline
-% TODO image
-The second test case takes place inside a rotating rectangular room.
+\begin{figure}[t!]
+    \includesvg[width=\linewidth]{images/test_rooms.svg}
+    \caption{The second (left) and third (right) test scene, with the emitter, receiver and rotation axis all denoted by the black dot.}\label{fig:TestScenes}
+\end{figure}
+The second test case takes place inside a rotating rectangular room as seen on the left side of \autoref{fig:TestScenes}.
 Said room is 4 meters in width and length and 3 meters tall.
 The receiver is in the very middle of the room,
 with the emitter being 1.2 meters above it.
@@ -21,10 +24,9 @@ The room rotates around the Z-axis once per second.
 This is used to test whether the differences between interpolated and snapshot methods
 lead to a notable difference in a slightly more practical scenario.
 \newline
-% TODO image
-The third test case takes place inside a rotating L-shaped room,
-as denoted in IMAGE, with the receiver being at the origin
-and the emitter being 0.5 meters above it.
+The third test case takes place inside a rotating, 2 meters tall L-shaped room,
+as denoted on the right side of \autoref{fig:TestScenes},
+with the receiver being at the origin at 1 meter height and the emitter being 0.5 meters above it.
 The room again rotates around the Z-axis, but takes three seconds for a full rotation.
 \newline
 This case is used to demonstrate the shortcomings of the interpolating intersection logic
