@@ -70,8 +70,7 @@ For the remainder of this thesis, this new intersection logic will be referred t
 A sphere \(C\) is modelled as having a radius \(r\) and a collection of keyframes \(k_n\), each with a center point \(c_{k_n}\) and a time \(t_{k_n}\).
 Intersection calculations need to be run separately for each set of consecutive keyframes \(k_1\) and \(k_2\).
 \newline
-% TODO image
-The center point \(c_t\) of \(C\) at time \(t\) can be defined
+The center point \(c_t\) of \(C\) at a time \(t, t_{k_1} \le t \le t_{k_2}\) can be defined
 as a blend between the two keyframes' center points \(c_{k_1}\) and \(c_{k_2}\):
 
 \begin{equation}
