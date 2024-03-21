@@ -19,7 +19,7 @@ The second test case takes place inside a rotating rectangular room as seen on t
 Said room is 4 meters in width and length and 3 meters tall.
 The receiver is exactly in the middle of the room,
 with the emitter being 1.2 meters above it.
-The room rotates around the Z-axis once per second.
+The room rotates around the Z-axis, completing a full rotation once per second.
 \newline
 This is used to test whether the differences between interpolated and snapshot methods
 lead to a notable difference in a slightly more practical scenario.
@@ -50,8 +50,8 @@ without considering bounces from a room around it.
 The ray is always directed at the receiver.
 \newline
 The other two test cases are run using 10 million rays per sample,
-which is enough to get an approximate \(T_{60}\) accurate to the 10th of a second.
-This is sufficient to draw conclusions about the scenes while requiring a reasonable amount of compute time.
+which is enough to get an approximate \(T_{60}\) sufficient to draw conclusions about the scenes
+while requiring a reasonable amount of compute time.
 To account for variance introduced by randomness, 3 runs are done per simulation method and scene.
 \newline
 For the two rotating scenes, only one energetic response is calculated and applied to all samples.
@@ -70,8 +70,8 @@ Running simulations for such scenes would require optimisations, much stronger h
 and/or conceits on ray count to be able to run in a reasonable time.
 \newline
 All walls in scenes that contain any have a material roughly resembling smooth concrete walls' behaviour for high frequencies.
-The absorption coefficient, based on data by acoustic.ua (\url{https://www.acoustic.ua/st/web_absorption_data_eng.pdf}),
-is 0.02, meaning that a ray retains 98\% of its energy after bouncing.
+The absorption coefficient \(\alpha_{rand}\), based on data by acoustic.ua (\url{https://www.acoustic.ua/st/web_absorption_data_eng.pdf}),
+is 0.98, meaning that a ray retains 98\% of its energy after bouncing.
 Data for diffusion coefficients is not publicly available, so by guesswork, a value of 0.1 was used,
 meaning that 90\% of the energy is specularly reflected, while 10\% is diffusely reflected.
 In practice, this means that rays have a 10\% chance to bounce in a random direction rather than reflecting off the surface normally.
@@ -128,7 +128,7 @@ This difference in frequency can be explained by a difference in the actual trav
 In the snapshot method, the receiver first receives signal after \(1s\),
 with the final bit of signal arriving at \(1.9s\).
 For the interpolated simulation, those numbers are \(0.9s\) and \(1.8s\) respectively.
-The signal is thus heard for 0.9 seconds for both receivers.
+The signal is thus heard for \(0.9s\) for both receivers.
 \newline
 Where the receivers' behaviour differs is in the distance they travel in the meantime:
 The interpolated method's receiver first starts getting a signal after having travelled for \(34.22\) meters,
@@ -155,7 +155,7 @@ This is because the simulation is run as the same sample rate as the input signa
 For each input sample, one energetic response is calculated.
 As the doppler effect speeds up the incoming signal,
 but the sped up signal is not upsampled accordingly,
-thus creating the same effect as if the signal was downsampled and stayed at the same frequency.
+the same effect as if the signal was downsampled and stayed at the same frequency is created.
 \newline
 To alleviate this, one would need to either run the signal through a low-pass filter ahead of time
 or have both the input signal and simulation at a higher sample rate,
@@ -223,7 +223,7 @@ The notable difference between the two energetic responses in \autoref{fig:CubeS
 lies in the energetic response of the interpolated version featuring a second set of early reflections,
 approximately around the 3000 sample mark (so after roughly 0.07 seconds).
 These later early reflections do not show in the snapshot method version.
-In auralization, these ERs become noticeable in the form of a fast delay effect on the input signal.
+In auralization, these reflections become noticeable in the form of a fast delay effect on the input signal.
 \newline
 \begin{figure}[t!]
     \begin{center}
@@ -242,7 +242,7 @@ As the angle of the walls changes as they rotate in the interpolated version,
 the angle these rays bounce at changes too, visualized in \autoref{fig:CubeSecondER}.
 This presumably leads to them coming back to the receiver earlier, creating the later early reflections.
 \newline
-This second set of early reflections also explains the difference in sound clarity \(C_{50}\):
+This second set of early reflections also explains the difference in sound clarity \(C_{50}\) seen in \autoref{tbl:CubeSceneTable}:
 Since these later reflections take place after the 50 millisecond mark,
 they worsen intelligibility, leading to a decreased clarity.
 
@@ -297,7 +297,7 @@ the logic as it stands cannot be used for accurate auralization of moving scenes
 The steps needed to resolve these issues will be outlined in \autoref{ch:Outlook}.
 \newline
 As the likelihood for a ray to get affected by this problem rises the more it bounces around the scene,
-the \(T_{60}\) and other data about late reverberation lose accuracy,
+the \(T_{60}\) and \(C_{50}\) data lose accuracy,
 rendering conclusions drawn from them less useful.
 The data gathered in the test runs is still included in \autoref{tbl:LSceneTable} for completeness' sake.
 \newline
@@ -335,3 +335,6 @@ making for a comparably low difference between the interpolating and static inte
 In turn, the implementation of the snapshot method has the additional overhead of re-calculating the scene's chunks for each snapshot scene,
 whereas the interpolated method only needs to run the chunk calculation once in the beginning.
 This overhead presumably offsets the already little additional cost from the interpolating check.
+\newline
+This becomes insignificant to a general performance analysis because in practice,
+the majority of scenes will use many rays rather than one and be complicated rather than empty.

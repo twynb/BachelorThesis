@@ -9,14 +9,14 @@ As with all fields, software tools have been developed to aid in adjusting a roo
 Several methods have been developed that allow an engineer to simulate the sound of a planned room before building and furnishing it,
 letting them check whether the acoustics hold up to their intended requirements.
 \newline
-The two most common methods of simulation are numeric and geometric approaches.
+The two most common methods of such simulation are numeric and geometric approaches.
 Numeric approaches work by getting the equation representing the wave's propagation in the room,
 then calculating a solution to it numerically.
 This leads to the most accurate results, but has a high computation cost attached to it,
 making it less viable for real-world uses.
 \newline
-Geometric methods instead model a sound wave as a large set of individual rays originating from the same spot,
-then simulate them bouncing through the room,
+Geometric methods instead model a sound wave as a large set of singular rays originating from the same spot,
+then individually simulate each ray bouncing through the room,
 similarly to how light is modelled in graphics ray tracers.
 This works fine for sounds at small wave lengths/high frequencies,
 but introduces errors for lower frequencies as a sound's wave properties are entirely discarded.
@@ -33,7 +33,8 @@ would be the acoustics of a rapidly rotating room.
 In order to differ from the echo the room creates while static,
 the room's rotation would need to reach a velocity at least one order of magnitude below the speed of sound.
 Building such a rotating room in the real world may be possible at a small scale,
-but becomes exponentially harder the bigger the room gets.
+but becomes exponentially harder the bigger the room gets,
+meaning that building a rotating cathedral-sized room becomes practically impossible.
 \newline
 In order to simulate such a room, the simulation would need to be able to account for
 the walls of the room moving while the sound wave itself is traversing the scene.
@@ -58,13 +59,14 @@ This thesis proposes a method to simulate rays bouncing through arbitrary scenes
 assuming all movement within the scene is known at time of calculation.
 An improved way of checking for intersections between rays and objects is developed, accommodating for this new requirement.
 \newline
-Optimisations are evaluated and a time-based chunking method is developed to avoid needless intersection checks.
+Optimisations are evaluated and commonly used spatial separation optimisations are adapted to also feature temporal separation
+in order to avoid needless intersection checks.
 \newline
 The goal of this research is to lay part of the groundwork required to allow accurate simulation of acoustics in moving rooms.
 \newline
 Three test cases are developed for this and compared to an implementation more akin to existing methods:
 An empty scene with the sound receiver approaching the sound emitter at 1/9th the speed of sound,
-a square room rapidly rotating
+a square room rapidly rotating around its center
 and a large, L-shaped room also rapidly rotating around one of its ends, with the receiver and emitter both sitting in said end.
 \newline
 Not within the scope of this thesis is development of a fully accurate simulator

@@ -1,11 +1,12 @@
 \chapter{Bouncing Rays Through Moving Scenes}\label{ch:Intersection}
 
 To bounce a ray through a scene, checks need to be performed to know which objects it intersects with and thus bounces off of.
-The general method for these intersection checks for static scenes have been established in \autoref{sec:FundamentalRT}.
+The general method for these intersection checks for static scenes has been established in \autoref{sec:FundamentalRT}.
+\newline
 Existing tools and research use this same method for intersection checks when simulating dynamic or moving scenes.
 A snapshot copy of the scene at the time a ray is launched is made,
 then intersection checks and bouncing logic use this static scene.
-This approach to moving scenes will be called the Snapshot approach in this thesis.
+This approach to moving scenes will be called the `snapshot approach' or `snapshot method' in this thesis.
 \newline
 This snapshot approach comes with a few advantages:
 The simple and well-optimised intersection logic from static scenes can be used without changes.
@@ -20,10 +21,10 @@ fully known at runtime.
     \caption{Difference between ray travelling distance using the newly developed interpolating method (top) as opposed to the snapshot method (bottom). In the interpolated version, the ray only travels part of the distance as the receiver travels the remainder.}\label{im:SnapshotExplain}
 \end{figure}
 The major downside of this snapshot approach is that it tends to introduce errors when objects or receivers move at high speeds.
-Take an example case of a sound receiver moving towards a sound emitter, as shown in~\ref{im:SnapshotExplain}:
+Take an example case of a sound receiver moving towards a sound emitter, as shown in~\autoref{im:SnapshotExplain}:
 If the receiver starts at a distance \(d\) away from the emitter and sound travels at a speed \(c\),
 the intersection time \(t\) becomes \(t = \frac{d}{c}\) as the receiver's movement is ignored.
-In actuality, if the receiver moves at a speed \(v\), the calculation for the real \(t\) would be \(t = \frac{d}{c+v}\).
+In actuality, if the receiver moves towards the emitter at a speed \(v\), the calculation for the real \(t\) would be \(t = \frac{d}{c+v}\).
 \newline
 As an example case, say that \(d = 343.2m, c = 343.2 m/s, v = c/9 = 38.0\bar{2} m/s\)
 (read: The receiver starts 1 second of travel at the speed of sound away from the emitter
@@ -40,7 +41,7 @@ This check becomes more complicated than its static counterpart as the equation 
 but now \(t\) is also part of the equation itself.
 In this chapter, equations are established and solved to perform intersection checks with moving spheres and surfaces,
 as those two should already be sufficient to simulate most scenes.
-Resolution for other primitives, such as quadric surfaces, should be derivable using a similar method.
+Equations for other primitives, such as quadric surfaces, should be derivable using a similar method.
 \newline
 The general scheme for this is as follows:
 First, the object is modelled in a way where its position (or other parameters) is also a function of \(t\).
@@ -59,15 +60,15 @@ the ray will either not have travelled to the resulting intersection point yet o
 Note that since the resulting function will, in the simplest case, be a 2nd degree polynomial, it can have multiple roots.
 Only roots greater than \(t_0\) are relevant to the intersection check as others would represent intersections from before the ray is even launched.
 Different primitives might also require different checks to filter out invalid roots depending on how they are modelled,
-such as the check for whether a point is inside a triangle described above.
+such as the check for whether a point is inside a triangle described in \autoref{sec:FundamentalRT}.
 Of the remaining roots, the first one represents the actual intersection time,
-the remaining ones can be discarded as they'd only take place if the ray didn't bounce off the first intersection already.
+the remaining ones can be discarded as they'd only take place if the ray didn't bounce off the object at the first intersection already.
 \newline
 For the remainder of this thesis, this new intersection logic will be referred to as the interpolated method.
 
 \section{Intersection Checks for Spheres}
 
-A sphere \(C\) is modelled as having a radius \(r\) and a collection of keyframes \(k_n\), each with a center point \(c_{k_n}\) and a time \(t_{k_n}\).
+A moving sphere \(C\) is modelled as having a radius \(r\) and a collection of keyframes \(k_n\), each with a center point \(c_{k_n}\) and a time \(t_{k_n}\).
 Intersection calculations need to be run separately for each set of consecutive keyframes \(k_1\) and \(k_2\).
 \newline
 The center point \(c_t\) of \(C\) at a time \(t, t_{k_1} \le t \le t_{k_2}\) can be defined
@@ -153,7 +154,7 @@ Defining \(\Delta c = c_{k_2} - c_{k_1}\) for simplicity, this results in a func
 Now, to get a polynomial function of \(t\), \(m\) needs to be resolved.
 The equation for variations of this logic that use different interpolation modes will diverge from here on out,
 but should be trivially solvable depending on the definition of \(m\).
-Replacing \(m\) with its definition from~\eqref{MDef} for linear interpolation yields the following equation:
+Replacing \(m\) with its definition from~\eqref{MDef} for linear interpolation yields a first form of this desired polynomial:
 
 \begin{equation*}
     \begin{split}
@@ -448,7 +449,7 @@ must be discarded as explained above.
 \newline
 For the remaining roots, another check needs to be done
 for whether the intersection point \(R(t)\) is actually inside the polygon, and not just on the same surface.
-With triangles, this can be easily done using the barycentric coordinates as described above.
+With triangles, this can be easily done using the barycentric coordinates as described in \autoref{sec:FundamentalRT}.
 \newline
 The root with the lowest value that satisfies the above conditions again represents the time where the ray and polygon intersect,
 assuming there is no intersection happening before. If no root satisfies these conditions, no intersection happens.
@@ -481,11 +482,11 @@ are only calculated once each and then reused.
 Additionally, this requires resolving the resulting polynomial,
 the cost of which is implementation dependent, but also rather high compared to the static check.
 As a reference, in the worst case of none of the polynomial's factors being 0,
-the Rust library \verb|roots| (as of version 0.0.8) used in the proof-of-concept, requires 13 additions/subtractions,
+the Rust library \verb|roots| (as of version 0.0.8) used in the proof-of-concept requires 13 additions/subtractions,
 58 multiplications and 12 divisions, plus trigonometric and square/cube root functions, the computation cost of which
 depends on the CPU architecture and cannot be reduced to a number of simple operations.
 \newline
-In total, the amount of calculations, especially multiplications, to perform balloons up with this more complex method.
+In total, the amount of calculations, especially multiplications, to perform thus balloons up with this more complex method.
 
 \section{Full Algorithm}
 
@@ -500,7 +501,7 @@ For a surface, this algorithm looks as follows:
 for index in 0..(keyframes.len - 1) {
     k1 = keyframes[index];
     k2 = keyframes[index+1];
-    // keyframes before the ray launch can be skipped
+    // pairs before the ray launch can be skipped
     if k2.time < ray_launch.time {
         continue;
     }

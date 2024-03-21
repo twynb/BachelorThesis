@@ -18,17 +18,17 @@
      id="defs2330" />
   <sodipodi:namedview
      inkscape:window-maximized="1"
-     inkscape:window-y="-8"
-     inkscape:window-x="1912"
-     inkscape:window-height="1137"
+     inkscape:window-y="103"
+     inkscape:window-x="-8"
+     inkscape:window-height="1017"
      inkscape:window-width="1920"
      showgrid="false"
      inkscape:document-rotation="0"
      inkscape:current-layer="layer1"
      inkscape:document-units="mm"
-     inkscape:cy="80.211897"
-     inkscape:cx="117.01015"
-     inkscape:zoom="7.9195959"
+     inkscape:cy="54.429501"
+     inkscape:cx="124.32767"
+     inkscape:zoom="3.959798"
      inkscape:pageshadow="2"
      inkscape:pageopacity="0.0"
      borderopacity="1.0"
@@ -43,7 +43,7 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
@@ -65,7 +65,7 @@
          y="2.3623512"
          x="45.924107"
          id="tspan2901"
-         sodipodi:role="line">A</tspan></text>
+         sodipodi:role="line">\(P_1\)</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:2.11667px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
@@ -76,7 +76,7 @@
          id="tspan2901-7"
          x="57.957333"
          y="29.592215"
-         style="font-size:2.11667px;stroke-width:0.264583">B</tspan></text>
+         style="font-size:2.11667px;stroke-width:0.264583">\(P_2\)</tspan></text>
     <text
        xml:space="preserve"
        style="font-size:2.11667px;line-height:1.25;font-family:sans-serif;stroke-width:0.264583"
@@ -87,7 +87,7 @@
          id="tspan2901-70"
          x="1.544386"
          y="25.150995"
-         style="font-size:2.11667px;stroke-width:0.264583">C</tspan></text>
+         style="font-size:2.11667px;stroke-width:0.264583">\(P_3\)</tspan></text>
     <path
        style="fill:none;stroke:#000000;stroke-width:0.26499999;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:0.26499999,0.26499999;stroke-dashoffset:0;stroke-opacity:1"
        d="M 57.357885,29.954614 37.465218,17.928738"
@@ -113,7 +113,7 @@
          y="18.053141"
          x="38.564396"
          id="tspan2958"
-         sodipodi:role="line">P</tspan></text>
+         sodipodi:role="line">\(p\)</tspan></text>
     <text
        id="text2964"
        y="24.2213"

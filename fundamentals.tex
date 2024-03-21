@@ -1,7 +1,7 @@
 \chapter{Fundamentals}\label{ch:Fundamentals}
 
 In order to be able to make use of the findings in this thesis,
-A basic understanding of ray tracing both in general as well as in the context of acoustics simulation is required.
+a basic understanding of ray tracing both in general as well as in the context of acoustics simulation is required.
 This chapter will provide a summary of the base idea of ray tracing
 before then introducing specific concepts relevant to acoustics.
 
@@ -18,14 +18,14 @@ thus allowing them to simply launch each ray in a randomised direction.
 Each ray's journey through the scene is then individually simulated
 by calculating which object it will next intersect with,
 then calculating the intersection point and the direction the ray will bounce off the object in.
-Then, a new ray in the resulting direction is launched from this intersection point and the process is repeated
+Then, a new ray is launched from this intersection point in the resulting direction and the process is repeated
 until some ending condition applies, at which point the ray is terminated.
 If the ray intersects with a receiver object, the according information gets stored.
 For acoustics, this is usually the intersection time and the energy the ray still had at intersection time.
 Depending on the domain, the ray is then terminated or continues bouncing by passing through the receiver.
 For acoustics, the latter behaviour is usually used.
 \newline
-Intersection checks are usually done by modelling objects using an equation that describes whether a point is on the object surface or not,
+Intersection checks are generally done by modelling objects using an equation that describes whether a point is on the object surface or not,
 then injecting the ray's function into that equation and resolving.
 With static objects, this check is trivial:
 The only parameter to resolve for is the intersection time \(t\), and said parameter only occurs in the ray function,
@@ -57,7 +57,7 @@ For triangles, this can be done using barycentric coordinates.
     \end{center}
     \caption{The barycentric coordinates of a point inside a triangle. Each coordinate is determined by the area of its subtriangle in relation to the whole triangle.}\label{fig:BarycentricExplain}
 \end{figure}
-Barycentric coordinates describe a point on a triangle (or another simplex) by separating a triangle into three parts,
+Barycentric coordinates describe a point on a triangle by separating said triangle into three parts,
 each with the given point and two corners of the triangle as its vertices.
 Each coordinate then describes the relative size of that subtriangle with respect to the full triangle,
 as shown in \autoref{fig:BarycentricExplain}.
@@ -92,7 +92,7 @@ and travelling in the direction \(v\) can be defined as follows:
     R(t) = P + (t - t_0) \cdot v
 \end{equation}
 
-This equation can then be injected into the equation describing the primitive and resolved.
+This equation can then be injected into the equation describing the primitive in place of \(p\) and resolved.
 As an example, using~\eqref{StaticSurface}, this calculation goes as follows:
 
 \begin{equation*}
@@ -165,9 +165,9 @@ The impulse/energetic response of a room can usually be divided into three parts
 the `early reflections' are early, not yet diffuse echoes
 and the remaining diffuse hall ringing out is called `late reverberation'.
 \newline
-The difference between an impulse and an energetic (or energy-time) response is the data being modelled.
+The difference between an impulse and an energetic (also called energy-time) response is the data being modelled.
 An energy-based model produces an energetic response \(p^2(t)\).
-This energy-time response is sufficient to make statements about a room's acoustics,
+This is sufficient to make statements about a room's acoustics,
 but cannot be used for proper auralization as phase information is lost.
 The solution to this problem is provided by pressure-based models,
 where instead of the energy \(p^2\),
@@ -196,16 +196,19 @@ computed as the average of all possible incidence angles.
 \newline
 Another important factor of acoustics that needs to be modelled is the effect of uneven surfaces.
 Specifically, imperfections in a surface that are within the same order of magnitude as the wavelength greatly affect that surface's acoustic behaviour
-as not waves are then not fully reflected in a specular manner.
-These non-specular reflections are usually modelled in a simplified manner such as scattering coefficients.
+as waves are then not fully reflected in a specular manner.
+There are several models to simplify simulation of these non-specular reflections,
+the simplest being the scattering coefficient.
 \newline
-The scattering coefficient, commonly noted as a number between 0 and 1, models the ratio of specularly to non-specularly reflected energy,
+The scattering coefficient, commonly a number between 0 and 1,
+denotes the ratio of how much energy a wall or material reflects specularly as opposed to non-specularly,
 splitting the signal into a specular and a diffuse component.
-A value of 0 means a perfectly even and specularly reflecting surface (like a perfect mirror for light),
+A value of 0 describes a perfectly even and specularly reflecting surface (like a perfect mirror for light),
 whereas 1 implies a fully diffuse reflection.
 \newline
 The distribution of this diffuse reflection is not specified by the scattering coefficient,
-so most systems simply assume a lambertian reflection model.
+so most systems simply assume one reflection model applying the same on all walls,
+the simplest model being an even distribution of energy in all directions.
 \newline
 The naive way to implement this in a ray tracing system would be for a bounce to not just emit one new ray, but several,
 with one keeping the specular component's energy and being reflected specularly,
@@ -214,7 +217,7 @@ which in turn are randomly spread across the hemisphere defined by the surface n
 This quickly becomes computationally expensive as the number of rays increases exponentially with each bounce.
 \newline
 In practice, to avoid the resulting performance problems,
-some systems (such as EAR~\cite{Th17}) generate a random number between 0 and 1 for each collision.
+some systems (such as EAR~\cite{Kr17}) generate a random number between 0 and 1 for each collision.
 If the scattering coefficient is greater than this random number,
 the ray is sent off into a random direction in the hemisphere defined by the surface's normal,
 otherwise it is reflected specularly as per \ref{eq:SpecularReflection}.
