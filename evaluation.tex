@@ -106,8 +106,14 @@ the resulting frequency can be calculated as
     f = \frac{c + v_r}{c + v_s} f_0 = \frac{342.2 m/s + 38.0\bar{2} m/s}{342.2 m/s} \cdot 440Hz = 488.\bar{8} Hz
 \end{equation}
 
-% TODO image of sound waves
-As expected, the first effect can be observed in the interpolated version of the simulation,
+\begin{figure}[t!]
+    \begin{center}
+        \includegraphics{images/approach-waves.png}
+    \end{center}
+    \caption{The output for test scene 1 for the interpolated (top) and snapshot (bottom) method, visualized using Audacity.}\label{fig:ApproachWaves}
+\end{figure}
+
+As expected and clearly visible in \autoref{fig:ApproachWaves}, the first effect can be observed in the interpolated version of the simulation,
 but not in the simulation using the snapshot method.
 This is because for the snapshot method,
 only the initial position of the receiver is relevant to the distance a ray needs to travel until it arrives at said receiver.
@@ -176,6 +182,8 @@ but works with any arbitrary scene.
         \hline
         \(T_{60}\) & 5.18s      & 5.27s      & 5.22s      & 5.26s     & 5.18s     & 5.22s     \\
         \hline
+        \(C_{50}\) & TODO       & TODO       & TODO       & TODO      & TODO      & TODO      \\
+        \hline
     \end{tabular}
     \caption{Rotating Cube Test Results}\label{tbl:CubeSceneTable}
 \end{table}
@@ -193,7 +201,7 @@ there is no significant difference between the snapshot (static) and interpolate
 \end{figure}
 \begin{figure}[t!]
     \begin{center}
-    \includesvg{images/cube_reflections.svg}
+        \includesvg{images/cube_reflections.svg}
     \end{center}
     \caption{A ray taking the same bouncing distance for the snapshot (left) and interpolated (right) version of the square room scene.}\label{fig:CubeRotation}
 \end{figure}
@@ -219,7 +227,7 @@ In auralization, these ERs become noticeable in the form of a fast delay effect 
 \newline
 \begin{figure}[t!]
     \begin{center}
-    \includesvg{images/cube_second_er.svg}
+        \includesvg{images/cube_second_er.svg}
     \end{center}
     \caption{A ray that would take lots of bounces to return to the emitter in a static scene (left) moves in a very different angle in a rotating scene (right), potentially causing a second set of early reflections.}\label{fig:CubeSecondER}
 \end{figure}
@@ -251,6 +259,8 @@ they worsen intelligibility, leading to a decreased clarity.
         \hline
         \(T_{60}\) & 5.15s      & 5.29s      & 4.99s      & 5.26s     & 5.41s     & 5:24s     \\
         \hline
+        \(C_{50}\) & TODO       & TODO       & TODO       & TODO      & TODO      & TODO      \\
+        \hline
     \end{tabular}
     \caption{Rotating L-Shaped Room Test Results}\label{tbl:LSceneTable}
 \end{table}
@@ -265,7 +275,7 @@ they worsen intelligibility, leading to a decreased clarity.
 Note that this scene shows a large limitation of the interpolated simulation as it stands:
 \begin{figure}[t!]
     \begin{center}
-    \includesvg[width=\linewidth]{images/hit_ray_from_back.svg}
+        \includesvg[width=\linewidth]{images/hit_ray_from_back.svg}
     \end{center}
     \caption{A ray (left arrow) bouncing off of a rotating wall and then getting hit by that wall from behind.}\label{fig:RayFromBack}
 \end{figure}
