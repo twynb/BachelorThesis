@@ -316,8 +316,8 @@ each being made up of 2 triangles.
 This intensifies due to the problem mentioned at the end of \autoref{sec:TraversingChunks}
 as this higher number of intersection checks is also run multiple times.
 \newline
-% TODO numbers for first scene
-The only test case in which the performance barely differs is the first test scene.
+The only test case in which the performance barely differs is the first test scene,
+where both the snapshot and interpolated calculation took 3 seconds.
 This is presumably because each energetic response is calculated using only a single ray
 which only needs to check for intersections with a single object,
 making for a comparably low difference between the interpolating and static intersection checks.
