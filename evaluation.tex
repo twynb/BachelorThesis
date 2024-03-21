@@ -191,10 +191,16 @@ there is no significant difference between the snapshot (static) and interpolate
     \end{center}
     \caption{The first 5000 samples of the energetic response for the rotating cube scene and snapshot/interpolated simulation, respectively}\label{fig:CubeSceneIR}
 \end{figure}
-% TODO image
+\begin{figure}[t!]
+    \begin{center}
+    \includesvg{images/cube_reflections.svg}
+    \end{center}
+    \caption{A ray taking the same bouncing distance for the snapshot (left) and interpolated (right) version of the square room scene.}\label{fig:CubeRotation}
+\end{figure}
 \autoref{fig:CubeSceneIR} shows that the early reflections are practically identical between the snapshot and interpolated method.
 This is due to the emitter and receiver being on the scene's rotation axis,
-which in turn means that the scene is always the same relative to both emitter and receiver, just rotated.
+which in turn means that the scene is always the same relative to both emitter and receiver, just rotated,
+as shown in \autoref{fig:CubeRotation}.
 \newline
 Thus, the bouncing behaviour for a ray bouncing off of a wall once before hitting the receiver
 in the snapshot simulation happens the same way in the interpolated simulation,
@@ -211,16 +217,21 @@ approximately around the 3000 sample mark (so after roughly 0.07 seconds).
 These later early reflections do not show in the snapshot method version.
 In auralization, these ERs become noticeable in the form of a fast delay effect on the input signal.
 \newline
-% TODO image
+\begin{figure}[t!]
+    \begin{center}
+    \includesvg{images/cube_second_er.svg}
+    \end{center}
+    \caption{A ray that would take lots of bounces to return to the emitter in a static scene (left) moves in a very different angle in a rotating scene (right), potentially causing a second set of early reflections.}\label{fig:CubeSecondER}
+\end{figure}
 This effect could come from rays whose initial direction points towards one of the room's side walls,
-with the direction being almost orthogonal to said wall.
+with the direction being almost orthogonal to said wall, as seen on the left side of \autoref{fig:CubeSecondER}.
 In the snapshot version of the simulation, assuming they don't get reflected diffusely,
 these rays bounce back and forth between opposite walls while hardly moving horizontally,
 meaning it takes long for them to arrive at the receiver again.
 These rays thus only end up in the late reverberation part of the energetic response.
 \newline
 As the angle of the walls changes as they rotate in the interpolated version,
-the angle these rays bounce at changes too.
+the angle these rays bounce at changes too, visualized in \autoref{fig:CubeSecondER}.
 This presumably leads to them coming back to the receiver earlier, creating the later early reflections.
 \newline
 This second set of early reflections also explains the difference in sound clarity \(C_{50}\):
@@ -252,9 +263,15 @@ they worsen intelligibility, leading to a decreased clarity.
 \end{figure}
 
 Note that this scene shows a large limitation of the interpolated simulation as it stands:
-% TODO image
+\begin{figure}[t!]
+    \begin{center}
+    \includesvg[width=\linewidth]{images/hit_ray_from_back.svg}
+    \end{center}
+    \caption{A ray (left arrow) bouncing off of a rotating wall and then getting hit by that wall from behind.}\label{fig:RayFromBack}
+\end{figure}
 As the back surface of the room is rotating in a circle,
-it is possible for it to hit a ray while that ray is moving away from it.
+it is possible for it to hit a ray while that ray is moving away from it,
+visualized in \autoref{fig:RayFromBack}.
 This would not happen in the real world as pressure gradients would guide the sound wave away from the wall.
 \newline
 The behaviour for sound waves getting hit by a wall from behind is thus not defined by physics.
