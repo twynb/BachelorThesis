@@ -17,7 +17,7 @@ and is used to demonstrate the basic differences between interpolated and snapsh
 \end{figure}
 The second test case takes place inside a rotating rectangular room as seen on the left side of \autoref{fig:TestScenes}.
 Said room is 4 meters in width and length and 3 meters tall.
-The receiver is in the very middle of the room,
+The receiver is exactly in the middle of the room,
 with the emitter being 1.2 meters above it.
 The room rotates around the Z-axis once per second.
 \newline
@@ -210,7 +210,7 @@ This is due to the emitter and receiver being on the scene's rotation axis,
 which in turn means that the scene is always the same relative to both emitter and receiver, just rotated,
 as shown in \autoref{fig:CubeRotation}.
 \newline
-Thus, the bouncing behaviour for a ray bouncing off of a wall once before hitting the receiver
+Thus, the bouncing behaviour for a ray bouncing off a wall once before hitting the receiver
 in the snapshot simulation happens the same way in the interpolated simulation,
 requiring only a different initial direction to account for the room's rotation.
 Rays are equally distributed in all directions, hence the result being equal.
@@ -277,7 +277,7 @@ Note that this scene shows a large limitation of the interpolated simulation as 
     \begin{center}
         \includesvg[width=\linewidth]{images/hit_ray_from_back.svg}
     \end{center}
-    \caption{A ray (left arrow) bouncing off of a rotating wall and then getting hit by that wall from behind.}\label{fig:RayFromBack}
+    \caption{A ray (left arrow) bouncing off a rotating wall and then getting hit by that wall from behind.}\label{fig:RayFromBack}
 \end{figure}
 As the back surface of the room is rotating in a circle,
 it is possible for it to hit a ray while that ray is moving away from it,
@@ -307,7 +307,7 @@ with only minor differences from slightly different random distribution.
 This is the same effect as observed in \autoref{fig:CubeSceneIR} for the square room:
 As the room stays the same relative to the emitter and receiver with only the rotation changing
 and because the rays are distributed equally in all directions,
-rays bouncing off of a wall once before hitting the receiver take the exact same time between the snapshot and interpolated method.
+rays bouncing off a wall once before hitting the receiver take the same time between the snapshot and interpolated method.
 Any difference in acoustics caused by the rotation lies in physical effects equally ignored in both methods.
 
 \section{Performance}

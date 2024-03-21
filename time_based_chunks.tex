@@ -31,7 +31,7 @@ Since objects can move around the scene, using one of these methods without chan
 If, for example, a receiver moves from one end of the scene to the other over the course of ten seconds,
 its bounding volume would extend over all of that distance for the entirety for the scene, despite it not touching
 the majority of it for the most part.
-Similarly, it would be kept in its starting position's chunk for the entirety of the scene despite leaving that area very early,
+Similarly, it would be kept in its starting position's chunk for the entirety of the scene despite leaving that area early,
 making for needless intersection checks if a ray enters that area at a later time.
 \newline
 For this use case, chunks become a lot more efficient than BVHs:
