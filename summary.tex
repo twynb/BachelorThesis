@@ -9,12 +9,12 @@ or don't attempt to simulate a full room's acoustics (such as Bilibashi et al.~\
 The only attempts at simulating moving scenes work around this lack of research by not actually simulating a moving scene.
 Instead, for each distinct point in time, a static copy of the scene is created,
 through which rays are then bounced.
-Since this involves a snapshot of the scene, this method is called the snapshot method in this thesis.
+Since it involves a snapshot of the scene, this approach is called the snapshot method in this thesis.
 \newline
 The snapshot method comes with the advantage that it can make use of all the optimisations and research done for static scenes,
 without having to change any of it.
 This allows for fast simulation to a point where Chandak et al.~were able to run such a simulation of a dynamic scene in real time~\cite{Cha08}.
-While this approach is thus usable for games and similar use cases where full realism is not the goal,
+While this approach is thus usable for games and similar use cases where perfect realism is not the goal,
 it comes with a few flaws that prevent it from creating a fully realistic simulation,
 some of which are resolved in this thesis.
 \newline
@@ -22,13 +22,13 @@ The major problem addressed in this thesis is the fact that this snapshot method
 no object in the scene moves by a significant distance.
 In many cases, this assumption holds true:
 In order to significantly change position while a ray is bouncing through the scene,
-an object would need to move at a speed within one, maybe two orders of magnitude from the wave propagation speed.
+an object would need to move at a speed within one, at most two orders of magnitude from the wave propagation speed.
 In computer graphics, the field where ray tracing is most commonly used,
 this is never the case as light travels several orders of magnitude faster than any human-made object ever has.
 Even in acoustics simulation, getting within a range where an object's speed becomes significant to sound
 requires movements faster than 100km/h, which do not happen in most simulated cases.
 \newline
-The simplest case where this assumption fails is if a receiver approaches a sound emitter at a comparably high speed.
+One example where this assumption does fail is if a receiver approaches a sound emitter at a comparably high speed.
 Using the snapshot method, if the receiver starts at a distance \(d\) away from the emitter,
 the sound will first start arriving at the emitter once the ray has travelled this entire distance,
 so with a propagation speed \(c\) that response time becomes \(t = \frac{d}{c}\).
@@ -83,11 +83,9 @@ allowing resolution of the equation for intersection time \(t\).
 Note that resolving these equations will become more complicated:
 With static checks, \(t\) only appears in the equation once.
 As the object equation is now also a function of \(t\),
-the new equation will contain multiple occurrences of \(t\),
-potentially leading to a harder to resolve function.
+the new equation will contain multiple occurrences of \(t\).
 \newline
-As a side effect of this,
-the resulting function will no longer be a simple linear equation.
+Thus, the resulting function will no longer be a simple linear equation.
 Instead, the type of the resulting equation depends on the interpolation mode used.
 For linear interpolation, this will usually be a higher-degree polynomial:
 The intersection check for spheres becomes a second-degree polynomial,
@@ -113,7 +111,7 @@ all roots with an imaginary part can be discarded immediately.
 \newline
 Furthermore, the computation time required to run an intersection check
 balloons up by a large amount as solving a higher degree polynomial (or other more complicated function)
-is much more complicated than solving a linear equation.
+is much more computationally expensive than solving a linear equation.
 This cost increase becomes notable in practice, where for the example scenes used for this thesis,
 using interpolating intersection checks increased computation time by a factor of 12 to 17.
 \newline
@@ -125,7 +123,7 @@ In general, there are two classes of this kind of solution:
 The first, bounding volume hierarchies (BVHs), work by encapsulating each object into a simpler primitive called a bounding volume,
 then combining those bounding volumes in a tree structure,
 which a ray then walks down, eliminating branches if it doesn't intersect with their bounding volume.
-The other method called chunking separates a scene into a grid of chunks,
+The other method, called chunking, separates a scene into a grid of chunks,
 each of which holds information about which objects are inside it.
 Rays then traverse through these chunks and only check for intersections with the objects in the chunks they reach.
 \newline
@@ -140,7 +138,7 @@ the list entries need to also contain an entry and exit time.
 The latter can be empty if the object does not leave the chunk after entering it,
 both can be empty if the object never moves.
 \newline
-The logic to fill the chunks with data, in turn, also needs to be adapted:
+The logic to fill the chunks with data, in turn, also needs to be changed:
 Instead of simply calculating the chunks an object is in once for each object,
 the best approach is to walk through the object's keyframes pairwise,
 detecting the times inbetween those keyframes where the chunks the object is in changes

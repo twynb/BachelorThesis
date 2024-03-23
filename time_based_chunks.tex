@@ -77,12 +77,11 @@ struct or class where the entry and exit times are optional or nullable fields.
 \newline
 A ray traversing this scene can now simply check when it enters and exits a chunk
 and pick out the objects to check for intersections with accordingly.
-When using sum types, the space requirements for static objects only increase by one byte denoting the type's variant
-(with even that potentially getting left out, as Herzog showed~\cite{He23}).
+When using sum types, the space requirements for static objects only increase by one byte denoting the type's variant.
 For moving objects, only up to two additional fields plus the variant field are required,
 with the timestamp fields' size depending on the implementation.
 Compared to the performance gains from avoiding needless intersection checks,
-this additional space requirement is comparatively minimal.
+this additional space requirement is minimal.
 
 \section{Calculating Chunks}
 
@@ -142,8 +141,8 @@ with each chunk touched by this last keyframe's version of the surface getting a
 This will be omitted from the algorithms' pseudocode for brevity.
 \newline
 This naive approach comes with the problem that if an object traverses a long distance between two keyframes,
-it will again be needlessly included in all chunks traversed for the entirety of its lifetime.
-An easy solution for this would be to insert `pseudo-keyframes' interpolated from the actual keyframes
+it will again be needlessly included in all chunks traversed for the entire time between those two keyframes.
+An easy solution for this is to insert `pseudo-keyframes' interpolated from the actual keyframes
 and running the above calculation between those.
 \newline
 The naive way to determine the position of these pseudo-keyframes while avoiding wrong chunk entries
@@ -268,7 +267,7 @@ mx = pow(n,2);
 chunk_start = xmin + chunkx * wx;
 if cx == 0 {
     // no movement in x direction
-    dx = MAX_INT;
+    dx = infinity;
     sx = 0;
 } else {
     if cx > 0 {
@@ -400,7 +399,7 @@ function traverse_chunk(p, t_dimension, tlast) {
 }
 \end{verbatim}
 
-\begin{figure}[t!]
+\begin{figure}[b!]
     \includesvg[width=\linewidth]{images/hit_after_chunk.svg}
     \caption{An example for why intersections happening outside of the ray's current chunk need to be ignored.}\label{fig:HitAfterChunk}
 \end{figure}

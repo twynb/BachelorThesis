@@ -55,22 +55,22 @@ while requiring a reasonable amount of compute time.
 To account for variance introduced by randomness, 3 runs are done per simulation method and scene.
 \newline
 For the two rotating scenes, only one energetic response is calculated and applied to all samples.
-This is because the starting condition of a rotating room is always the same:
+This works because the room always starts in the same state regardless of ray launching time:
 As both rooms rotate around the emitter's and the receiver's position
 and the emitter emits rays randomly in all directions,
-the relative position of the room to the receiver and emitter is always the same,
+the relative position of the room to the receiver and emitter is always the same, just rotated,
 making for the same energetic response at all times.
 \newline
-Simulations would become much more expensive for scenes where this condition doesn't apply,
+Simulations would become much more expensive for scenes where this condition does not apply,
 as that would mean calculating individual impulse responses for each sample.
-For a 1 second sample at 44100 KHz and a roughly 20 minute IR calculation time
+For a 1 second sample at 44100 KHz and a roughly 20 minute ER calculation time
 (rounded down from the snapshot method test results below),
 this would take \(44100 \cdot 20 m = 882000 m = 14700 h = 612.5 d\).
 Running simulations for such scenes would require optimisations, much stronger hardware
 and/or conceits on ray count to be able to run in a reasonable time.
 \newline
 All walls in scenes that contain any have a material roughly resembling smooth concrete walls' behaviour for high frequencies.
-The absorption coefficient \(\alpha_{rand}\), based on data by acoustic.ua (\url{https://www.acoustic.ua/st/web_absorption_data_eng.pdf}),
+The absorption coefficient \(\alpha_{rand}\), based on data by akustik.ua~\cite{A14},
 is 0.98, meaning that a ray retains 98\% of its energy after bouncing.
 Data for diffusion coefficients is not publicly available, so by guesswork, a value of 0.1 was used,
 meaning that 90\% of the energy is specularly reflected, while 10\% is diffusely reflected.
@@ -90,7 +90,7 @@ leading to long late reverberation.
 
 \section{Approaching Receiver Scene}
 
-In theory, two effects should be observable here.
+In theory, two effects should be observable here:
 \newline
 Firstly, the ray would take 1 second to arrive at the emitter's position.
 As the emitter is travelling towards the ray and covering a tenth of the distance in the time the ray travels the remainder,
@@ -134,7 +134,7 @@ Where the receivers' behaviour differs is in the distance they travel in the mea
 The interpolated method's receiver first starts getting a signal after having travelled for \(34.22\) meters,
 with it receiving the last signal after a \(68.44m\) travel distance,
 meaning it moved for a total of \(34.22m\) over the course of receiving this signal.
-Since the snapshot method doesn't take receiver movement into account,
+Since the snapshot method only uses the receiver's position at emission time,
 the first signal is received after \(0m\) of travel distance,
 with the final part arriving after \(38.0\bar{2}m\) of travel distance.
 \newline
@@ -337,3 +337,6 @@ This overhead presumably offsets the already little additional cost from the int
 \newline
 This becomes insignificant to a general performance analysis because in practice,
 the majority of scenes will use many rays rather than one and be complicated rather than empty.
+If no objects are moving at significant speeds and if a perfectly realistic simulation is not the goal,
+this performance hit is likely not worth the change in results.
+This new interpolated logic should thus only be used if the use case of the simulation justifies it.

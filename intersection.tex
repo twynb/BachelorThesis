@@ -4,11 +4,11 @@ To bounce a ray through a scene, checks need to be performed to know which objec
 The general method for these intersection checks for static scenes has been established in \autoref{sec:FundamentalRT}.
 \newline
 Existing tools and research use this same method for intersection checks when simulating dynamic or moving scenes.
-A snapshot copy of the scene at the time a ray is launched is made,
+A static copy of the scene at the time a ray is launched is made,
 then intersection checks and bouncing logic use this static scene.
 This approach to moving scenes will be called the `snapshot approach' or `snapshot method' in this thesis.
 \newline
-This snapshot approach comes with a few advantages:
+The snapshot method comes with a few advantages:
 The simple and well-optimised intersection logic from static scenes can be used without changes.
 Also, crucially, knowledge of how the scene will move over the time the ray spends bouncing around it is not required.
 All data necessary to simulate the bouncing is available at the time the ray is emitted,
@@ -117,7 +117,7 @@ Injecting the ray equation~\eqref{RayEq} in place of \(p\) in~\eqref{SphereDef}:
 \end{equation}
 
 The squared norm of a vector can be replaced with its dot product with itself (\(\|v\|^2 = v \cdot v \)).
-This will allow for the equation to be resolved into a sum of multiple dot products.
+This will then later allow for the equation to be resolved into a set of multiple easy to calculate summands.
 
 \begin{equation*}
     (P - c_{k_2} + t \cdot v - t_0 \cdot v + m \cdot (c_{k_2} - c_{k_1})) \cdot (P - c_{k_2} + t \cdot v - t_0 \cdot v + m \cdot (c_{k_2} - c_{k_1})) = r^2
@@ -220,7 +220,9 @@ replace \(r^2\) with the interpolated version \({(m - r_{k_1} + (1-m) r_{k_2})}^
 The real roots of~\eqref{SpherePoly} represent all times at which the sphere and ray would theoretically intersect.
 Note that all roots \(t\) where \(t < t_{k_1}\) or \(t > t_{k_2}\) must be discarded
 because the surface is not described by \(k_1\) and \(k_2\) outside the time frame between them.
-Additionally, all roots where \(t \le t_0\) must be discarded as these intersections would happen before the ray is launched,
+For interpolation modes using more than 2 keyframes,
+these bounds change to the time frame a given set of keyframes describes a surface in.
+Additionally, all roots where \(t < t_0\) must be discarded as these intersections would happen before the ray is launched,
 behind its starting location.
 \newline
 Of the roots remaining after this filter, the lowest result for \(t\) is the one where the ray and sphere intersect,
@@ -327,7 +329,7 @@ As with~\eqref{SphereBeforeM}, to get a function of \(t\),
 \end{multline*}
 
 Using the distributive law and the binomial theorem,
-This can be resolved to a second-degree polynomial
+this can be resolved to a second-degree polynomial
 
 \begin{equation}\label{SurfaceCrossPoly}
     P_{a, t} \times P_{b, t} = f_{2, a, b}t^2 + f_{1, a, b}t + f_{0, a, b}
@@ -384,9 +386,9 @@ Replacing the cross products in~\eqref{SurfaceBeforeCross} with the polynomial f
     = 0
 \end{equation*}
 
-Injecting~\eqref{SurfacePointDef} for \(P_{1, t}\) and
+Injecting the point function~\eqref{SurfacePointDef} for \(P_{1, t}\) and
 introducing \(g_n = f_{n, 2, 3} - f_{n, 2, 1} - f_{n, 1, 3}\)
-and \(\Delta P_1 = P_{1, k_2} - P_{1, k-1}\) for readability
+as well as \(\Delta P_1 = P_{1, k_2} - P_{1, k-1}\) for readability
 results in this equation:
 
 \begin{equation}\label{SurfaceAfterCross}
@@ -449,7 +451,7 @@ must be discarded as explained above.
 \newline
 For the remaining roots, another check needs to be done
 for whether the intersection point \(R(t)\) is actually inside the polygon, and not just on the same surface.
-With triangles, this can be easily done using the barycentric coordinates as described in \autoref{sec:FundamentalRT}.
+With triangles, this can be easily done using barycentric coordinates as described in \autoref{sec:FundamentalRT}.
 \newline
 The root with the lowest value that satisfies the above conditions again represents the time where the ray and polygon intersect,
 assuming there is no intersection happening before. If no root satisfies these conditions, no intersection happens.
@@ -494,7 +496,7 @@ A full algorithm to check for intersections then needs to iterate over every pai
 (or set, for interpolation modes working with more than two keyframes) of keyframes for each object
 and run the intersection check as described above.
 \newline
-For a surface, this algorithm looks as follows:
+For a surface with an interpolation mode using pairs of keyframes, this algorithm looks as follows:
 
 \begin{verbatim}
 // define keyframes and ray here

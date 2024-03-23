@@ -31,7 +31,7 @@ With static objects, this check is trivial:
 The only parameter to resolve for is the intersection time \(t\), and said parameter only occurs in the ray function,
 usually making for a first-degree polynomial function.
 \newline
-As an example, a surface \(S\) can be modelled using a point \(P_1\) on it as well as its normal \(n\).
+As an example, an infinite surface \(S\) can be modelled using a point \(P_1\) on it as well as its normal \(n\).
 Then, to tell if any point \(p\) is on \(S\), the vector from \(P_1\) to \(p\) can be compared to \(n\).
 If they're orthogonal to each other (thus their dot product is 0), \(p\) is on \(S\):
 
@@ -62,8 +62,9 @@ each with the given point and two corners of the triangle as its vertices.
 Each coordinate then describes the relative size of that subtriangle with respect to the full triangle,
 as shown in \autoref{fig:BarycentricExplain}.
 \newline
-Thus, each point inside the triangle can be described by coordinates \((\alpha, \beta, \gamma)\),
-with \(0 \le \alpha \le 1\), \(0 \le \beta \le 1\), \(0 \le \gamma \le 1\) and \(\alpha + \beta + \gamma = 1\).
+Thus, every point on the triangle's surface can be described using three coordinates \((\alpha, \beta, \gamma)\).
+For any point \(p\) that is inside the triangle,
+\(0 \le \alpha \le 1\), \(0 \le \beta \le 1\), \(0 \le \gamma \le 1\) and \(\alpha + \beta + \gamma = 1\).
 If these conditions do not apply to \(p\), it is outside the triangle.
 \newline
 The naive way to calculate barycentric coordinates would be to calculate the areas of \(P_1P_2p\), \(P_1P_3p\), \(P_2P_3p\) and
@@ -84,7 +85,7 @@ and calculating the last one from the first two instead; if \(\alpha\) and \(\be
 For further optimisation, the Lagrange identity \((a \times b) \cdot (c \times d) = (a \cdot c)(b \cdot d) - (a \cdot d)(b \cdot c)\)
 can be used to replace the cross products with dot products, as shown by Ericson~\cite{Er04}.
 \newline
-In order to calculate the intersection point \(p\), the equation describing a ray then needs to be injected into the surface equation.
+In order to calculate the intersection point \(p\) for a ray tracer, the equation describing a ray then needs to be injected into the surface equation.
 A ray \(R\)'s position at time \(t\), with \(R\) starting at the point \(P\) at time \(t_0\)
 and travelling in the direction \(v\) can be defined as follows:
 
@@ -105,6 +106,8 @@ As an example, using~\eqref{StaticSurface}, this calculation goes as follows:
 If \(t\) exists and is greater than \(t_0\),
 the point \(p = R(t)\) describes the intersection point and can be used for further checks
 as well as bouncing.
+If intersections exist for multiple objects,
+only the lowest \(t\) is relevant as all other intersections would only happen if the ray didn't bounce off the first object already.
 \newline
 The bouncing direction can be determined in a number of ways,
 depending on the surface and how it reflects waves.
@@ -120,7 +123,7 @@ Different reflection modes will be discussed in \autoref{sec:FundamentalGA} as t
 and not important for a general understanding of ray tracing.
 \newline
 Alongside the launch position and direction,
-rays usually store the energy or colour information they represent in some form.
+rays usually store the energy or other information of the wave they represent in some form.
 This information tends to get altered with each bounce -
 For acoustics simulation, the ray's energy simply gets decremented depending on the bouncing material.
 This too will be elaborated on in \autoref{sec:FundamentalGA}.
@@ -193,6 +196,8 @@ For energy-based geometric acoustics, this is usually modelled through an absorp
 which in turn can be calculated from a wall's plane-wave reflection coefficient \(R(\theta)\) often determined through measurement.
 Some systems simplify this to a single random incidence absorption coefficient \(\alpha_{rand}\)
 computed as the average of all possible incidence angles.
+For this thesis, the absorption coefficient is denoted as a number between 0 and 1,
+where 0 means all energy is absorbed (the ray terminates) and 1 means that all energy gets reflected.
 \newline
 Another important factor of acoustics that needs to be modelled is the effect of uneven surfaces.
 Specifically, imperfections in a surface that are within the same order of magnitude as the wavelength greatly affect that surface's acoustic behaviour
@@ -200,7 +205,7 @@ as waves are then not fully reflected in a specular manner.
 There are several models to simplify simulation of these non-specular reflections,
 the simplest being the scattering coefficient.
 \newline
-The scattering coefficient, commonly a number between 0 and 1,
+The scattering coefficient, also denoted as a number between 0 and 1 in this thesis,
 denotes the ratio of how much energy a wall or material reflects specularly as opposed to non-specularly,
 splitting the signal into a specular and a diffuse component.
 A value of 0 describes a perfectly even and specularly reflecting surface (like a perfect mirror for light),
@@ -224,4 +229,4 @@ otherwise it is reflected specularly as per \ref{eq:SpecularReflection}.
 As a high amount of rays is sent out into the scene,
 the result of this random distribution eventually matches the distribution defined by the scattering coefficient.
 This is not as accurate as splitting up rays,
-but usually accurate enough to be a justifiable optimisation.
+but usually close enough to be a justifiable optimisation.

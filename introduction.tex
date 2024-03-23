@@ -3,7 +3,8 @@
 Anyone who ever moved places knows the amazing difference between the sound of talking inside an empty room
 as opposed to talking in that same room once it's filled with furniture.
 Acoustics as a field has long been dedicated to exploring these kinds of differences,
-as well as developing methods to ensure that a room's acoustics fit its purpose.
+as well as developing methods to ensure that a room's sound fits its purpose.
+Recording studios, for example, aim to have as little reverberation as possible in order to give the recording artists more control over their sound.
 \newline
 As with all fields, software tools have been developed to aid in adjusting a room's acoustics.
 Several methods have been developed that allow an engineer to simulate the sound of a planned room before building and furnishing it,
@@ -34,7 +35,7 @@ In order to differ from the echo the room creates while static,
 the room's rotation would need to reach a velocity at least one order of magnitude below the speed of sound.
 Building such a rotating room in the real world may be possible at a small scale,
 but becomes exponentially harder the bigger the room gets,
-meaning that building a rotating cathedral-sized room becomes practically impossible.
+to a point where building a rotating cathedral-sized room becomes practically impossible.
 \newline
 In order to simulate such a room, the simulation would need to be able to account for
 the walls of the room moving while the sound wave itself is traversing the scene.
@@ -42,7 +43,7 @@ This is mostly unexplored thus far.
 Bilibashi et al.~\cite{BVD20} have explored simulating rays bouncing between a set of moving points, namely cars,
 but their approach is not viable for a full room acoustics simulation.
 \newline
-Existing simulations have only concerned themselves with static scenes.
+Existing simulations have almost exclusively concerned themselves with static scenes.
 For dynamic scenes, existing tools such as EAR~\cite{Kr17} and research such as that by Chandak et al.~\cite{Cha08}
 work around having to account for movement by taking a static version of the scene at a given time
 and bouncing rays through that instead,
