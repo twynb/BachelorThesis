@@ -171,18 +171,17 @@ but works with any arbitrary scene.
 
 \section{Rotating Cube Scene}
 
-% TODO calculation and analysis of C50
 \begin{table}[t!]
     \centering
     \begin{tabular}{| c | c | c | c | c | c | c |}
         \hline
         Run        & Snapshot 1 & Snapshot 2 & Snapshot 3 & Interp. 1 & Interp. 2 & Interp. 3 \\
         \hline
-        Time       & 0:22:29    & 0:22:33    & 0:22:35    & 4:30:51   & 4:13:41   & 4:12:56   \\
+        Time       & 0:22:33    & 0:22:42    & 0:22:32    & 4:29:42   & 4:11:32   & 4:13:18   \\
         \hline
-        \(T_{60}\) & 5.18s      & 5.27s      & 5.22s      & 5.26s     & 5.18s     & 5.22s     \\
+        \(T_{60}\) & 5.18s      & 5.18s      & 5.20s      & 5.27s     & 5.20s     & 5.18s     \\
         \hline
-        \(C_{50}\) & TODO       & TODO       & TODO       & TODO      & TODO      & TODO      \\
+        \(C_{50}\) & -7.94dB    & -7.93dB    & -7.95dB    & -8.29dB   & -8.29dB   & -8.27dB   \\
         \hline
     \end{tabular}
     \caption{Rotating Cube Test Results}\label{tbl:CubeSceneTable}
@@ -248,18 +247,17 @@ they worsen intelligibility, leading to a decreased clarity.
 
 \section{Rotating L-Shaped Room Scene}\label{sec:LRoom}
 
-% TODO calculation and analysis of C50
 \begin{table}[t!]
     \centering
     \begin{tabular}{| c | c | c | c | c | c | c |}
         \hline
         Run        & Snapshot 1 & Snapshot 2 & Snapshot 3 & Interp. 1 & Interp. 2 & Interp. 3 \\
         \hline
-        Time       & 0:23:59    & 0:24:03    & 0:24:02    & 6:48:14   & 6:46:50   & 6:47:22   \\
+        Time       & 0:23:50    & 0:23:45    & 0:23:49    & 6:44:09   & 6:45:59   & 6:45:33   \\
         \hline
-        \(T_{60}\) & 5.15s      & 5.29s      & 4.99s      & 5.26s     & 5.41s     & 5:24s     \\
+        \(T_{60}\) & 5.00s      & 5.18s      & 5.03s      & 5.21s     & 5.11s     & 4.92s     \\
         \hline
-        \(C_{50}\) & TODO       & TODO       & TODO       & TODO      & TODO      & TODO      \\
+        \(C_{50}\) & -2.90dB    & -2.91dB    & -2.90dB    & -3.02dB   & -3.00dB   & -3.03dB   \\
         \hline
     \end{tabular}
     \caption{Rotating L-Shaped Room Test Results}\label{tbl:LSceneTable}
@@ -297,9 +295,10 @@ the logic as it stands cannot be used for accurate auralization of moving scenes
 The steps needed to resolve these issues will be outlined in \autoref{ch:Outlook}.
 \newline
 As the likelihood for a ray to get affected by this problem rises the more it bounces around the scene,
-the \(T_{60}\) and \(C_{50}\) data lose accuracy,
-rendering conclusions drawn from them less useful.
-The data gathered in the test runs is still included in \autoref{tbl:LSceneTable} for completeness' sake.
+metrics based on late reverberations such as \(T_{60}\) and \(C_{50}\) lose accuracy,
+as seen in the \(T_{60}\) varying more between simulation runs than it does for the other simulations.
+This renders conclusions drawn from them less useful,
+but the data gathered in the test runs is still included in \autoref{tbl:LSceneTable} for completeness' sake.
 \newline
 The fact that interpolating intersection checks alone do not suffice for an accurate simulation also shows in the energetic responses:
 As seen in \autoref{fig:LSceneIR}, the early reflections are almost exactly the same between the snapshot and interpolated simulation,
