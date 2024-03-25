@@ -40,7 +40,7 @@ forcing a ray to not just check one bounding volume, but multiple per object.
 This also means that in order to be able to create meaningful bounding volume hierarchies,
 each object's bounding volumes would need to be separated at the same points in time,
 which can lead to redundancies if objects move at different times.
-Calculating a useful BVH becomes near impossible.
+Calculating a useful BVH becomes almost impossible.
 \newline
 The amount of chunks, in turn, does not change:
 They can be adapted simply by storing not just which objects are inside them,
@@ -93,12 +93,12 @@ The information held by keyframes is the same as defined in \autoref{sec:Interse
 \newline
 Additionally, the starting coordinates of the very first chunk \verb|xmin, ymin, zmin|
 as well as the chunk sizes \verb|wx, wy, wz| need to be known.
-For the starting coordinates, the lowest coordinates any object in the scene ever has can be used.
-The chunk sizes can be determined by determining a number of chunks to use for calculation,
+The starting coordinates are generally the lowest coordinates reached by an object in the scene.
+The chunk sizes can be determined by determining a number of chunks to be used for calculation,
 then calculating the difference between the scene's lowest and highest coordinates in each dimension
 and dividing that by the number of chunks.
 To avoid errors with objects being at the very edge of the last chunk,
-it is recommendable to slightly pad out the scene's lowest and highest coordinates
+it is advisable to slightly pad out the scene's lowest and highest coordinates
 from the actual extremes found in objects.
 \newline
 A naive algorithm to place a surface in its appropriate chunks could then look like this:
@@ -138,7 +138,7 @@ for m in 1..(surface.num_keyframes - 1) {
 Note that to avoid errors after the last keyframe's time,
 the last keyframe then needs to also be processed on its own,
 with each chunk touched by this last keyframe's version of the surface getting an according \verb|Final| entry.
-This will be omitted from the algorithms' pseudocode for brevity.
+This is omitted from the pseudocode of all algorithms in this section for brevity.
 \newline
 This naive approach comes with the problem that if an object traverses a long distance between two keyframes,
 it will again be needlessly included in all chunks traversed for the entire time between those two keyframes.
@@ -401,21 +401,20 @@ function traverse_chunk(p, t_dimension, tlast) {
 
 \begin{figure}[b!]
     \includesvg[width=\linewidth]{images/hit_after_chunk.svg}
-    \caption{An example for why intersections happening outside of the ray's current chunk need to be ignored.}\label{fig:HitAfterChunk}
+    \caption[Demonstration of why only intersections inside a chunk are counted]{An example for why intersections happening outside of the ray's current chunk need to be ignored.}\label{fig:HitAfterChunk}
 \end{figure}
 Intersections that are outside of the entry/exit time (\verb|tlast| and \verb|t_dimension| respectively) for the current chunk are discarded.
 This is to avoid errors when a ray would intersect with the given object in a chunk it will enter later,
 but would also hit another object before it.
-If the other object is not inside the chunk the ray starts out in,
-but the object that would get hit later is,
-that later intersection would otherwise incorrectly be returned without ever checking for an intersection with the other object.
+Take \autoref{fig:HitAfterChunk} as an example:
+Object 1 is in all three shown chunks, whereas object 2 is only in the middle chunk.
+When the ray tests for intersections with objects in the first chunk,
+it finds that it does eventually hit object 1.
+If it takes this as a final result and proceeds to bounce off of its intersection with object 1,
+it never enters the second chunk and thus never checks for an intersection with object 2.
+This leads to a wrong result as the ray should bounce off of object 2 instead.
 This error can also occur with the original CW88 algorithm,
 but incidentally becomes easier to fix through this adaptation.
-\newline
-An example for this error can be found in \autoref{fig:HitAfterChunk}:
-The ray starts out in the same chunk as object 1 and thus checks for intersections with it.
-If the intersection with object 1 found in this check is used immediately,
-the intersection with object 2 happening in the next chunk would wrongly be ignored despite it happening before the ray hits object 1.
 \newline
 Simply discarding intersections outside the time the ray is within a chunk comes with the downside of duplicate calculations:
 If an object is inside three chunks the ray travels through, with the intersection happening in the last of those chunks,

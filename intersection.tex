@@ -12,13 +12,13 @@ The snapshot method comes with a few advantages:
 The simple and well-optimised intersection logic from static scenes can be used without changes.
 Also, crucially, knowledge of how the scene will move over the time the ray spends bouncing around it is not required.
 All data necessary to simulate the bouncing is available at the time the ray is emitted,
-without a need for information on how the scene will continue to move.
+without the need for information on how the scene will continue to move.
 This is especially helpful for real-time simulation of dynamic scenes, as data about how the scene will continue to move is not
 fully known at runtime.
 \newline
 \begin{figure}[t!]
     \includesvg[width=\linewidth]{images/snapshot.svg}
-    \caption{Difference between ray travelling distance using the newly developed interpolating method (top) as opposed to the snapshot method (bottom). In the interpolated version, the ray only travels part of the distance as the receiver travels the remainder.}\label{im:SnapshotExplain}
+    \caption[Explanation image for the snapshot method]{Difference between ray travelling distance using the newly developed interpolating method (top) as opposed to the snapshot method (bottom). In the interpolated version, the ray only travels part of the distance as the receiver travels the remainder.}\label{im:SnapshotExplain}
 \end{figure}
 The major downside of this snapshot approach is that it tends to introduce errors when objects or receivers move at high speeds.
 Take an example case of a sound receiver moving towards a sound emitter, as shown in~\autoref{im:SnapshotExplain}:
@@ -62,7 +62,7 @@ Only roots greater than \(t_0\) are relevant to the intersection check as others
 Different primitives might also require different checks to filter out invalid roots depending on how they are modelled,
 such as the check for whether a point is inside a triangle described in \autoref{sec:FundamentalRT}.
 Of the remaining roots, the first one represents the actual intersection time,
-the remaining ones can be discarded as they'd only take place if the ray didn't bounce off the object at the first intersection already.
+the remaining ones can be discarded as they'd only take place if the ray didn't bounce off of the object at the first intersection already.
 \newline
 For the remainder of this thesis, this new intersection logic will be referred to as the interpolated method.
 
@@ -116,7 +116,7 @@ Injecting the ray equation~\eqref{RayEq} in place of \(p\) in~\eqref{SphereDef}:
     \|P + (t - t_0) \cdot v - c_t\|^2 = r^2
 \end{equation}
 
-The squared norm of a vector can be replaced with its dot product with itself (\(\|v\|^2 = v \cdot v \)).
+The squared norm of a vector is equal to its dot product with itself (\(\|v\|^2 = v \cdot v \)) and can thus be replaced by it.
 This will then later allow for the equation to be resolved into a set of multiple easy to calculate summands.
 
 \begin{equation*}
@@ -226,7 +226,7 @@ Additionally, all roots where \(t < t_0\) must be discarded as these intersectio
 behind its starting location.
 \newline
 Of the roots remaining after this filter, the lowest result for \(t\) is the one where the ray and sphere intersect,
-assuming the ray does not bounce off a different object before that.
+assuming the ray does not bounce off of a different object before that.
 The coordinates at which the intersection takes place can be calculated by calculating \(R(t)\).
 
 \section{Intersection Checks for Surfaces}\label{sec:IntersectSurface}

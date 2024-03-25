@@ -13,7 +13,7 @@ letting them check whether the acoustics hold up to their intended requirements.
 The two most common methods of such simulation are numeric and geometric approaches.
 Numeric approaches work by getting the equation representing the wave's propagation in the room,
 then calculating a solution to it numerically.
-This leads to the most accurate results, but has a high computation cost attached to it,
+This leads to the most accurate results, but has a high computational cost attached to it,
 making it less viable for real-world uses.
 \newline
 Geometric methods instead model a sound wave as a large set of singular rays originating from the same spot,
@@ -23,13 +23,13 @@ This works fine for sounds at small wave lengths/high frequencies,
 but introduces errors for lower frequencies as a sound's wave properties are entirely discarded.
 In turn, geometric methods are much faster than numeric approaches,
 to a point where a room's acoustics can be simulated in real time~\cite{Cha08}.
-At time of writing, most commercially available acoustics simulation tools use ray tracing or similar geometric methods~\cite{Th17}.
+At the time of writing, most commercially available acoustics simulation tools use ray tracing or similar geometric methods~\cite{Th17}.
 \newline
-Both of these methods can of course also be used to simulate entirely hypothetical rooms without any intent to build them,
+Of course, both of these methods can also be used to simulate entirely hypothetical rooms without any intent to build them,
 or rooms that can't exist in the real world to begin with,
 which can help physicists study properties of these theoretical places that can then be applied to real ones.
 \newline
-An example for a case that would be interesting to study but near impossible to measure in real life
+An example for a case that would be interesting to study but nearly impossible to measure in real life
 would be the acoustics of a rapidly rotating room.
 In order to differ from the echo the room creates while static,
 the room's rotation would need to reach a velocity at least one order of magnitude below the speed of sound.
@@ -37,24 +37,24 @@ Building such a rotating room in the real world may be possible at a small scale
 but becomes exponentially harder the bigger the room gets,
 to a point where building a rotating cathedral-sized room becomes practically impossible.
 \newline
-In order to simulate such a room, the simulation would need to be able to account for
-the walls of the room moving while the sound wave itself is traversing the scene.
-This is mostly unexplored thus far.
-Bilibashi et al.~\cite{BVD20} have explored simulating rays bouncing between a set of moving points, namely cars,
+In such a room, the walls would move by a significant amount in the time a sound wave takes to traverse the scene.
+A simulation would need to account for this movement, which is mostly unexplored thus far.
+Bilibashi et al.~\cite{BVD20} have attempted to simulate rays bouncing between a set of moving points, namely cars,
 but their approach is not viable for a full room acoustics simulation.
 \newline
 Existing simulations have almost exclusively concerned themselves with static scenes.
-For dynamic scenes, existing tools such as EAR~\cite{Kr17} and research such as that by Chandak et al.~\cite{Cha08}
-work around having to account for movement by taking a static version of the scene at a given time
-and bouncing rays through that instead,
-then repeating this process for every point in time at which acoustics are simulated.
+The only existing simulations of dynamic or moving scenes,
+namely tools such as EAR~\cite{Kr17} and research such as that by Chandak et al.~\cite{Cha08},
+mainly ignore these movements:
+They instead take a static version of the scene at a given time and bounce waves through that non-moving scene,
+then repeat this process for every point in time at which acoustics are simulated.
 \newline
 This works well in most cases, but leads to problems when objects in the room move fast enough
 that the distance they would travel in the time a ray is bouncing through the scene becomes significant.
 To start alleviating this problem,
 this thesis aims to create a new way to simulate bouncing rays through a moving room without errors introduced by the older approach.
 
-\section{Scope of This Thesis}\label{sec:Scope}
+\section{Scope}\label{sec:Scope}
 
 This thesis proposes a method to simulate rays bouncing through arbitrary scenes with moving receivers and/or objects,
 assuming all movement within the scene is known at time of calculation.
@@ -81,8 +81,8 @@ In the real world, rapid rotations such as the ones in the example scenes would 
 which would lead to air pressure differing in different parts of the room,
 in turn changing the behaviour of sound waves bouncing around the room.
 Other rapid movements would create other forces and pressure gradients.
-Exploring these changes requires further research and is outside the scope of this thesis.
-In \autoref{sec:LRoom}, an example where the simulation without regard for pressure gradients falls short will be shown.
+Exploring these changes requires further research and is outside the scope of this thesis,
+but an example for where simulation without regard for pressure gradients falls short will be shown in the evaluation section.
 \newline
 A note-worthy side effect that gets ignored is mass inertia:
 The example case where this would become relevant is the inside of a linearly moving enclosed room, such as a driving car.

@@ -13,7 +13,7 @@ and is used to demonstrate the basic differences between interpolated and snapsh
 \newline
 \begin{figure}[t!]
     \includesvg[width=\linewidth]{images/test_rooms.svg}
-    \caption{The second (left) and third (right) test scene, with the emitter, receiver and rotation axis all denoted by the black dot.}\label{fig:TestScenes}
+    \caption[The second and third test scene]{The second (left) and third (right) test scene, with the emitter, receiver and rotation axis all denoted by the black dot.}\label{fig:TestScenes}
 \end{figure}
 The second test case takes place inside a rotating rectangular room as seen on the left side of \autoref{fig:TestScenes}.
 Said room is 4 meters in width and length and 3 meters tall.
@@ -63,7 +63,7 @@ making for the same energetic response at all times.
 \newline
 Simulations would become much more expensive for scenes where this condition does not apply,
 as that would mean calculating individual impulse responses for each sample.
-For a 1 second sample at 44100 KHz and a roughly 20 minute ER calculation time
+For a 1 second sample at 44100 Hz and a roughly 20 minute ER calculation time
 (rounded down from the snapshot method test results below),
 this would take \(44100 \cdot 20 m = 882000 m = 14700 h = 612.5 d\).
 Running simulations for such scenes would require optimisations, much stronger hardware
@@ -110,7 +110,7 @@ the resulting frequency can be calculated as
     \begin{center}
         \includegraphics{images/approach-waves.png}
     \end{center}
-    \caption{The output for test scene 1 for the interpolated (top) and snapshot (bottom) method, visualized using Audacity.}\label{fig:ApproachWaves}
+    \caption[Visualization of the outputs for test scene 1]{The output for test scene 1 for the interpolated (top) and snapshot (bottom) method, visualized using Audacity.}\label{fig:ApproachWaves}
 \end{figure}
 
 As expected and clearly visible in \autoref{fig:ApproachWaves}, the first effect can be observed in the interpolated version of the simulation,
@@ -196,13 +196,13 @@ there is no significant difference between the snapshot (static) and interpolate
     \begin{center}
         \input{images/partial_cube_compare.pgf}
     \end{center}
-    \caption{The first 5000 samples of the energetic response for the rotating cube scene and snapshot/interpolated simulation, respectively}\label{fig:CubeSceneIR}
+    \caption[The start of the energetic responses for test scene 2]{The first 5000 samples of the energetic response for the rotating cube scene and snapshot/interpolated simulation, respectively}\label{fig:CubeSceneIR}
 \end{figure}
 \begin{figure}[t!]
     \begin{center}
         \includesvg{images/cube_reflections.svg}
     \end{center}
-    \caption{A ray taking the same bouncing distance for the snapshot (left) and interpolated (right) version of the square room scene.}\label{fig:CubeRotation}
+    \caption[Demonstration of matching bounces between static and rotating scene.]{A ray taking the same bouncing distance for the snapshot (left) and interpolated (right) version of the square room scene.}\label{fig:CubeRotation}
 \end{figure}
 \autoref{fig:CubeSceneIR} shows that the early reflections are practically identical between the snapshot and interpolated method.
 This is due to the emitter and receiver being on the scene's rotation axis,
@@ -228,7 +228,7 @@ In auralization, these reflections become noticeable in the form of a fast delay
     \begin{center}
         \includesvg{images/cube_second_er.svg}
     \end{center}
-    \caption{A ray that would take lots of bounces to return to the emitter in a static scene (left) moves in a very different angle in a rotating scene (right), potentially causing a second set of early reflections.}\label{fig:CubeSecondER}
+    \caption[The difference in early bouncing behaviour between a static and rotating scene.]{A ray that would take lots of bounces to return to the emitter in a static scene (left) moves in a very different angle in a rotating scene (right), potentially causing a second set of early reflections.}\label{fig:CubeSecondER}
 \end{figure}
 This effect could come from rays whose initial direction points towards one of the room's side walls,
 with the direction being almost orthogonal to said wall, as seen on the left side of \autoref{fig:CubeSecondER}.
@@ -267,7 +267,7 @@ they worsen intelligibility, leading to a decreased clarity.
     \begin{center}
         \input{images/partial_l_compare.pgf}
     \end{center}
-    \caption{The first 2000 samples of the energetic response for the rotating L-shaped room scene and snapshot/interpolated simulation, respectively}\label{fig:LSceneIR}
+    \caption[The start of the energetic responses for test scene 3]{The first 2000 samples of the energetic response for the rotating L-shaped room scene and snapshot/interpolated simulation, respectively}\label{fig:LSceneIR}
 \end{figure}
 
 Note that this scene shows a large limitation of the interpolated simulation as it stands:
@@ -275,7 +275,7 @@ Note that this scene shows a large limitation of the interpolated simulation as 
     \begin{center}
         \includesvg[width=\linewidth]{images/hit_ray_from_back.svg}
     \end{center}
-    \caption{A ray (left arrow) bouncing off a rotating wall and then getting hit by that wall from behind.}\label{fig:RayFromBack}
+    \caption[Demonstration of a ray getting hit by a wall]{A ray (left arrow) bouncing off a rotating wall and then getting hit by that wall from behind.}\label{fig:RayFromBack}
 \end{figure}
 As the back surface of the room is rotating in a circle,
 it is possible for it to hit a ray while that ray is moving away from it,
@@ -283,16 +283,17 @@ visualized in \autoref{fig:RayFromBack}.
 This would not happen in the real world as pressure gradients would guide the sound wave away from the wall.
 \newline
 The behaviour for sound waves getting hit by a wall from behind is thus not defined by physics.
-For the sake of this simulation, the rays are discarded as they can't bounce off the wall.
+For the sake of this simulation, the rays are discarded as they can't bounce off of the wall.
 This case can be made less likely by having the room rotate at a slower speed:
-The lower the rotation speed, the flatter the angle rays have to bounce off the wall at to be able to then get hit by it from behind.
+If the wall moves at a slower speed,
+a ray needs to also be slower relative to the wall's movement to be able to get hit by it,
+meaning that it can only be hit if it bounced off of the wall at a flatter angle.
 That solution, however, is antithetical to the goal of this research, which is to simulate rapidly rotating rooms.
 \newline
 To generalise the problem, with the current state of this research,
 any scene that involves surfaces moving in a direction roughly orthogonal to themselves breaks the simulation for the reason described above.
 Since this condition will apply to most scenes more complex than a single room,
 the logic as it stands cannot be used for accurate auralization of moving scenes.
-The steps needed to resolve these issues will be outlined in \autoref{ch:Outlook}.
 \newline
 As the likelihood for a ray to get affected by this problem rises the more it bounces around the scene,
 metrics based on late reverberations such as \(T_{60}\) and \(C_{50}\) lose accuracy,

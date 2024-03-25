@@ -15,9 +15,9 @@ each launched from the wave's emitter in a direction the wave would travel in to
 Most audio ray tracers assume emitters emit sound uniformly in all directions,
 thus allowing them to simply launch each ray in a randomised direction.
 \newline
-Each ray's journey through the scene is then individually simulated
+Each ray's path through the scene is then individually simulated
 by calculating which object it will next intersect with,
-then calculating the intersection point and the direction the ray will bounce off the object in.
+then calculating the intersection point and the direction the ray will bounce off of the object in.
 Then, a new ray is launched from this intersection point in the resulting direction and the process is repeated
 until some ending condition applies, at which point the ray is terminated.
 If the ray intersects with a receiver object, the according information gets stored.
@@ -55,7 +55,7 @@ For triangles, this can be done using barycentric coordinates.
     \begin{center}
     \includesvg{images/barycentric.svg}
     \end{center}
-    \caption{The barycentric coordinates of a point inside a triangle. Each coordinate is determined by the area of its subtriangle in relation to the whole triangle.}\label{fig:BarycentricExplain}
+    \caption[Visualization of barycentric coordinates]{The barycentric coordinates of a point inside a triangle. Each coordinate is determined by the area of its subtriangle in relation to the whole triangle.}\label{fig:BarycentricExplain}
 \end{figure}
 Barycentric coordinates describe a point on a triangle by separating said triangle into three parts,
 each with the given point and two corners of the triangle as its vertices.
@@ -107,7 +107,7 @@ If \(t\) exists and is greater than \(t_0\),
 the point \(p = R(t)\) describes the intersection point and can be used for further checks
 as well as bouncing.
 If intersections exist for multiple objects,
-only the lowest \(t\) is relevant as all other intersections would only happen if the ray didn't bounce off the first object already.
+only the lowest \(t\) is relevant as all other intersections would only happen if the ray didn't bounce off of the first object already.
 \newline
 The bouncing direction can be determined in a number of ways,
 depending on the surface and how it reflects waves.
@@ -119,14 +119,13 @@ The specularly reflected direction \(r\) can be calculated from the inbound dire
 \begin{equation}\label{eq:SpecularReflection}
     r = i - (2 \cdot i \cdot n) \cdot n
 \end{equation}
-Different reflection modes will be discussed in \autoref{sec:FundamentalGA} as they are usually domain dependent
+Different reflection modes are usually domain dependent
 and not important for a general understanding of ray tracing.
 \newline
 Alongside the launch position and direction,
 rays usually store the energy or other information of the wave they represent in some form.
 This information tends to get altered with each bounce -
 For acoustics simulation, the ray's energy simply gets decremented depending on the bouncing material.
-This too will be elaborated on in \autoref{sec:FundamentalGA}.
 \newline
 This stored energy can be used as an ending condition:
 Once the ray's energy goes below a certain threshold,

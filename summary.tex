@@ -1,6 +1,6 @@
 \chapter{Summary}\label{ch:Summary}
 
-As it stands, research on geometric acoustics simulation has only concerned itself with simulation of static scenes.
+As it stands, research on geometric acoustics simulation has only dealt with simulation of static scenes.
 While there are a few attempts at allowing simulation of moving or dynamic scenes,
 they either only concern themselves with moving emitters and receivers
 (such as the numeric approach by Raghuvanshi et al.~\cite{RS10})
@@ -24,7 +24,8 @@ In many cases, this assumption holds true:
 In order to significantly change position while a ray is bouncing through the scene,
 an object would need to move at a speed within one, at most two orders of magnitude from the wave propagation speed.
 In computer graphics, the field where ray tracing is most commonly used,
-this is never the case as light travels several orders of magnitude faster than any human-made object ever has.
+this is practically never the case as for the size of most simulated scenes,
+light can be assumed to travel instantaneously.
 Even in acoustics simulation, getting within a range where an object's speed becomes significant to sound
 requires movements faster than 100km/h, which do not happen in most simulated cases.
 \newline
@@ -95,7 +96,7 @@ This increased equation complexity comes with several side effects:
 Firstly, a more complicated equation means that the equation can have more than a single root.
 For intersection checks, this means that after eliminating all invalid roots,
 only the lowest valid root is the actual intersection time,
-as all later intersections would only happen if the ray didn't bounce off the first surface.
+as all later intersections would only happen if the ray didn't bounce off of the first surface.
 \newline
 Eliminating all invalid roots entails the same checks as before,
 meaning that roots from before the ray's starting time are discarded
@@ -119,7 +120,7 @@ This increase in turn means that intersection checks need to be reduced as much 
 A common solution for this in static scenes is to separate objects by their position,
 then only run intersection checks with objects whose position the ray can reach in the first place.
 \newline
-In general, there are two classes of this kind of solution:
+In general, implementations of this concept can be grouped into two classes:
 The first, bounding volume hierarchies (BVHs), work by encapsulating each object into a simpler primitive called a bounding volume,
 then combining those bounding volumes in a tree structure,
 which a ray then walks down, eliminating branches if it doesn't intersect with their bounding volume.
@@ -147,8 +148,8 @@ The detection of these change times can be done using an approach similar to bin
 splitting up the time between keyframes into smaller parts repeatedly
 until the object's chunks stop changing over the course of a part.
 \newline
-Algorithms used to model traversal through chunks also need to be adapted accordingly
-because in order to determine which objects to run intersection checks with,
+Algorithms used to model traversal through chunks also need to be adapted accordingly:
+In order to determine which objects to run intersection checks with,
 the time at which a ray enters and exits each chunk needs to be known.
 \newline
 Two major changes are needed:
