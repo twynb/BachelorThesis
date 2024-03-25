@@ -495,10 +495,12 @@ In total, the amount of calculations, especially multiplications, to perform thu
 A full algorithm to check for intersections then needs to iterate over every pair
 (or set, for interpolation modes working with more than two keyframes) of keyframes for each object
 and run the intersection check as described above.
+Once an intersection is found,
+future keyframes no longer need to be checked as any valid intersection time for them would happen after the found root.
 \newline
 For a surface with an interpolation mode using pairs of keyframes, this algorithm looks as follows:
 
-\begin{verbatim}
+\begin{lstlisting}[basicstyle=\small, caption={[Intersection check algorithm]Intersection check algorithm}, label={lst:intersection}]
 // define keyframes and ray here
 for index in 0..(keyframes.len - 1) {
     k1 = keyframes[index];
@@ -520,21 +522,16 @@ for index in 0..(keyframes.len - 1) {
             continue;
         }
         // potential further checks here
-
         if intersection_time == null
             || root < intersection_time {
                 intersection_time = root
         }
     }
     // no need to check future keyframes
-    // if an intersection was found
     if root != null {
         return root;
     }
 }
 // no intersection
 return null;
-\end{verbatim}
-
-Note that if an intersection is found,
-future keyframes no longer need to be checked as any valid intersection time for them would happen after the found root.
+\end{lstlisting}

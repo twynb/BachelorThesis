@@ -29,9 +29,14 @@
 % workaround for matplotlib pgf plots
 \def\mathdefault#1{#1}
 \usepackage{svg}
+% Hurenkinder/Schusterjungen ausschliessen
 \usepackage{nowidow}
 \setnowidow[2]
 \setnoclub[2]
+\usepackage{listings}
+\lstdefinestyle{pseudocode}{frame=lr}
+\lstset{style=pseudocode,captionpos=b,frame=tb}
+\renewcommand{\lstlistlistingname}{List of Listings}
 
 % \setcounter{lotdepth}{2}
 
@@ -187,5 +192,8 @@ This lays part of the foundation for correct simulation of non-static scenes.
 \addcontentsline{toc}{chapter}{\listtablename}
 \listoftables\cleardoublepage
 
+%% Listings
+\addcontentsline{toc}{chapter}{\lstlistlistingname}
+\lstlistoflistings\cleardoublepage
 
 \end{document}

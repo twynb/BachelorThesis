@@ -56,9 +56,9 @@ One holding the index of the object in question,
 one holding the time at which the object enters the chunk
 and one holding the time at which the object leaves the chunk.
 Since the latter two fields might both be optional if the scene starts/ends with the object inside the scene,
-this can be nicely represented using a sum type such as Rust's Enumerators or C's union types with different states:
-
-\begin{verbatim}
+this can be nicely represented using a sum type such as Rust's Enumerators or C's union types with different states,
+as seen in \hyperref[lst:chunkEntries]{listing~\ref*{lst:chunkEntries}}.
+\begin{lstlisting}[basicstyle=\small, caption={[Time-based chunk entry states]Possible time-based chunk entry states, using a sum type}, label={lst:chunkEntries}, float, floatplacement=h!]
 // Object stays within chunk for the whole scene
 // only store the index
 Static(object)
@@ -67,8 +67,8 @@ Dynamic(object, time_entry, time_exit)
 // Object enters chunk at the given time
 // and stays until the end
 Final(object, time_entry)
-\end{verbatim}
-
+\end{lstlisting}
+\newline
 As the scene's start time is known and the state of objects before it is irrelevant,
 a state containing only an exit time is not necessary as it can be modelled using the
 \verb|Dynamic| state with a \verb|time_entry| matching the scene's starting time.
@@ -102,8 +102,7 @@ it is advisable to slightly pad out the scene's lowest and highest coordinates
 from the actual extremes found in objects.
 \newline
 A naive algorithm to place a surface in its appropriate chunks could then look like this:
-
-\begin{verbatim}
+\begin{lstlisting}[basicstyle=\small, caption={[Naive chunk calculation]A naive chunk calculation algorithm}, label={lst:naive}]
 for m in 1..(surface.num_keyframes - 1) {
     keyframe_first = surface.keyframes[m-1];
     keyframe_second = surface.keyframes[m];
@@ -133,7 +132,7 @@ for m in 1..(surface.num_keyframes - 1) {
         }
     }
 }
-\end{verbatim}
+\end{lstlisting}
 
 Note that to avoid errors after the last keyframe's time,
 the last keyframe then needs to also be processed on its own,
@@ -149,7 +148,7 @@ The naive way to determine the position of these pseudo-keyframes while avoiding
 would be to move through time from the first keyframe's time to the second keyframe's time,
 then write new chunk entries whenever the chunks at the given time change:
 
-\begin{verbatim}
+\begin{lstlisting}[basicstyle=\small, caption={[Chunk calculation using pseudo-keyframes]Using pseudo-keyframes for more accurate chunks}, label={lst:pseudoKeyframes}]
 function add_to_chunks(key_first, key_second) {
     last_time = key_first.time;
     time = key_first.time + 1;
@@ -170,7 +169,7 @@ function add_to_chunks(key_first, key_second) {
     }
     write_chunks(last_time, time, index, key_second.chunks);
 }
-\end{verbatim}
+\end{lstlisting}
 
 This is obviously inefficient performance wise as keyframes need to be interpolated for every single step
 despite the chunks potentially staying the same for many of said steps.
@@ -178,7 +177,7 @@ A more efficient approach could use a divide-and-conquer approach,
 continually halving the range between the middling and first keyframe until they are the same,
 somewhat akin to binary search:
 
-\begin{verbatim}
+\begin{lstlisting}[basicstyle=\small, caption={[Final chunk calculation algorithm]Finalised chunk calculation algorithm}, label={lst:finalChunkCalculation}]
 function add_to_chunks(key_first, key_second) {
     time = key_first.time
     while time != key_second.time {
@@ -210,7 +209,7 @@ function add_to_chunks(key_first, key_second) {
         key_first = key_middle;
     }
 }
-\end{verbatim}
+\end{lstlisting}
 
 This can be optimised further by fully behaving like binary search,
 always halving the range between the first and middle keyframe in both directions,
@@ -237,7 +236,7 @@ a slightly altered version of the algorithm by Cleary and Wyvill~\cite{CW88} (ca
 \newline
 CW88 works by keeping track of the distance a ray needs to travel until it arrives at the next chunk in each dimension
 using three variables \verb|dx, dy, dz|
-as well as keeping track of the distance a ray needs to travel between two chunk borders in the same dimension
+as well as storing the distance a ray needs to travel between two chunk borders in the same dimension
 in three additional variables \verb|deltax, deltay, deltaz|.
 The \verb|delta*| variables are initialised based on the ray's direction cosines,
 with \verb|d*| being initialised as the percentage of the corresponding \verb|delta*| variable relevant to the starting chunk.
@@ -259,7 +258,7 @@ with three variables \verb|px, py, pz| storing the value to add to the index whe
 All in all, the original CW88 algorithm works as follows,
 with initialisation of y- and z-related variables being omitted for brevity:
 
-\begin{verbatim}
+\begin{lstlisting}[basicstyle=\small, caption={[Original CW88 algorithm]The original CW88 algorithm, slightly adapted to support arbitrary chunk sizes}, label={lst:cw88}]
 // init cx as direction cosine for x
 // init chunkx, chunky, chunkz as chunk index
 p = chunkx * pow(n, 2) + chunky * n + chunkz;
@@ -303,15 +302,12 @@ while true {
         p += pz;
         dz += deltaz;
     }
-    if !chunk_contains_objects(p) {
-        continue;
-    }
     intersection = intersection_check(p);
     if intersection != null {
         return intersection;
     }
 }
-\end{verbatim}
+\end{lstlisting}
 
 In order to use CW88 with time-based chunks,
 new variables are introduced to also keep track of the elapsed time.
@@ -340,7 +336,7 @@ a new variable \verb|tlast| is introduced and initialised as the ray's starting 
 \newline
 The full traversal algorithm, omitting all variable initialisation for brevity, then looks as follows:
 
-\begin{verbatim}
+\begin{lstlisting}[basicstyle=\small, caption={[Adapted CW88 algorithm]The adapted version of CW88 for time-based chunks.}, label={lst:alteredCW88}]
 while true {
     if tx <= ty && tx <= tz {
         intersection = traverse_chunk(p, tx, tlast);
@@ -386,9 +382,6 @@ while true {
 }
 
 function traverse_chunk(p, t_dimension, tlast) {
-    if !chunk_contains_objects(p) {
-        continue;
-    }
     intersection = intersection_check(p);
     if intersection != null 
         && intersection.time <= t_dimension
@@ -397,7 +390,7 @@ function traverse_chunk(p, t_dimension, tlast) {
     }
     return null;
 }
-\end{verbatim}
+\end{lstlisting}
 
 \begin{figure}[b!]
     \includesvg[width=\linewidth]{images/hit_after_chunk.svg}
