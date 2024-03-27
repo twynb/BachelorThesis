@@ -394,7 +394,7 @@ results in this equation:
 \begin{equation}\label{SurfaceAfterCross}
     (
     P + t \cdot v - t_0 \cdot v - P_{1, k_2}
-    + \frac{t_{k_2} \Delta P_1}{\Delta t}
+    + \frac{t_{k_2} \cdot \Delta P_1}{\Delta t}
     - \frac{t \cdot \Delta P_1}{\Delta t}
     ) \cdot
     (
@@ -456,40 +456,6 @@ With triangles, this can be easily done using barycentric coordinates as describ
 The root with the lowest value that satisfies the above conditions again represents the time where the ray and polygon intersect,
 assuming there is no intersection happening before. If no root satisfies these conditions, no intersection happens.
 
-\section{Computational Cost}\label{sec:IntersectionCost}
-
-To gauge the additional computation cost for interpolated intersection checks as opposed to static ones,
-consider the analytical solution for static surface intersection calculations as described in~\eqref{StaticSurfaceIntersect}
-and using~\eqref{PolygonNormal}.
-\newline
-Naively calculating a cross product requires 6 multiplications and 3 subtractions.
-The dot product requires just 3 multiplications, as does multiplying a scalar onto a coordinate vector.
-This means that to calculate the intersection time for a static surface,
-a total of 15 additions/subtractions, 15 multiplications and 1 division is required.
-As \(n\) is always the same for a surface, it can be cached,
-reducing the cost to only 6 additions/subtractions, 9 multiplications and 1 division.
-\newline
-For the interpolated surface checks, calculating \(f_{0..2, a, b}\) as per~\eqref{SurfaceFStart} to~\eqref{SurfaceFEnd}
-alone already takes 71 additions/subtractions and 124 multiplications.
-As \(g_{0..2}\) takes 3 sets of \(f\), it thus requires 213 additions/subtractions and 372 multiplications.
-Since \(g_{0..2}\) remains the same for a pair of surface keyframes independently of the incoming ray,
-it can be cached for each keyframe pair. The same applies for \(\Delta t\) and \(\Delta P_1\),
-which otherwise would introduce one and three subtractions respectively.
-\newline
-Then calculating the surface intersection as per~\eqref{SurfacePolyStart}-\eqref{SurfacePolyEnd}
-requires 14 additions/subtractions, 42 multiplications and 3 divisions,
-assuming that \(g_{0..2} \cdot v\) and \(\frac{g_{0..2} \cdot \Delta P_1}{\Delta t}\)
-are only calculated once each and then reused.
-\newline
-Additionally, this requires resolving the resulting polynomial,
-the cost of which is implementation dependent, but also rather high compared to the static check.
-As a reference, in the worst case of none of the polynomial's factors being 0,
-the Rust library \verb|roots| (as of version 0.0.8) used in the proof-of-concept requires 13 additions/subtractions,
-58 multiplications and 12 divisions, plus trigonometric and square/cube root functions, the computation cost of which
-depends on the CPU architecture and cannot be reduced to a number of simple operations.
-\newline
-In total, the amount of calculations, especially multiplications, to perform thus balloons up with this more complex method.
-
 \section{Full Algorithm}
 
 A full algorithm to check for intersections then needs to iterate over every pair
@@ -535,3 +501,48 @@ for index in 0..(keyframes.len - 1) {
 // no intersection
 return null;
 \end{lstlisting}
+
+\section{Computational Cost}\label{sec:IntersectionCost}
+
+To gauge the additional computation cost for interpolated intersection checks as opposed to static ones,
+consider the analytical solution for static surface intersection calculations as described in~\eqref{StaticSurfaceIntersect}
+and using~\eqref{PolygonNormal}.
+\newline
+Naively calculating a cross product requires 6 multiplications and 3 subtractions.
+The dot product requires just 3 multiplications, as does multiplying a scalar onto a coordinate vector.
+This means that to calculate the intersection time for a static surface,
+a total of 15 additions/subtractions, 15 multiplications and 1 division is required.
+As \(n\) is always the same for a surface, it can be cached,
+reducing the cost to only 6 additions/subtractions, 9 multiplications and 1 division.
+\newline
+For the interpolated surface checks, calculating \(f_{0..2, a, b}\) as per~\eqref{SurfaceFStart} to~\eqref{SurfaceFEnd}
+alone already takes 71 additions/subtractions and 124 multiplications.
+As \(g_{0..2}\) takes 3 sets of \(f\), it thus requires 213 additions/subtractions and 372 multiplications.
+Since \(g_{0..2}\) remains the same for a pair of surface keyframes independently of the incoming ray,
+it can be cached for each keyframe pair. The same applies for \(\Delta t\) and \(\Delta P_1\),
+which otherwise would introduce one and three subtractions respectively.
+\newline
+Then calculating the surface intersection as per~\eqref{SurfacePolyStart}-\eqref{SurfacePolyEnd}
+requires 14 additions/subtractions, 42 multiplications and 3 divisions,
+assuming that \(g_{0..2} \cdot v\) and \(\frac{g_{0..2} \cdot \Delta P_1}{\Delta t}\)
+are only calculated once each and then reused.
+\newline
+Additionally, this requires resolving the resulting polynomial,
+the cost of which is implementation dependent, but also rather high compared to the static check.
+As a reference, in the worst case of none of the polynomial's factors being 0,
+the Rust library \verb|roots| (as of version 0.0.8) used in the proof-of-concept requires 13 additions/subtractions,
+58 multiplications and 12 divisions, plus trigonometric and square/cube root functions, the computational cost of which
+depends on the CPU architecture and cannot be reduced to a number of simple operations.
+\newline
+Another factor that makes this interpolating intersection check more expensive is the fact that it is not just run once per object:
+Since objects are described by keyframes and the check needs to be run for every relevant pair or set of keyframes,
+the amount of calculations and thus required operations multiplies by the amount of keyframe pairs.
+For an object with five keyframes where only the first pair of keyframes happens before the ray launch,
+this means having to run the intersection check three times, rather than just once for a static object.
+\newline
+All of these factors show that the amount of calculations required to check for intersections sharply rises with this interpolated method.
+Optimisations are thus needed to reduce the amount of intersection checks that are run.
+One minor optimisation that could be done already is to keep track of the earliest found intersection:
+Once an intersection has been found, any pair of keyframes happening after this intersection no longer needs to be checked
+as any found intersection would take place after the already existing one.
+Other optimisations will be evaluated in the next chapter.

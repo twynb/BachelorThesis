@@ -382,7 +382,7 @@ while true {
 }
 
 function traverse_chunk(p, t_dimension, tlast) {
-    intersection = intersection_check(p);
+    intersection = intersection_check(p, tlast, t_dimension);
     if intersection != null 
         && intersection.time <= t_dimension
         && intersection.time >= tlast {
@@ -391,11 +391,6 @@ function traverse_chunk(p, t_dimension, tlast) {
     return null;
 }
 \end{lstlisting}
-
-\begin{figure}[b!]
-    \includesvg[width=\linewidth]{images/hit_after_chunk.svg}
-    \caption[Demonstration of why only intersections inside a chunk are counted]{An example for why intersections happening outside of the ray's current chunk need to be ignored.}\label{fig:HitAfterChunk}
-\end{figure}
 Intersections that are outside of the entry/exit time (\verb|tlast| and \verb|t_dimension| respectively) for the current chunk are discarded.
 This is to avoid errors when a ray would intersect with the given object in a chunk it will enter later,
 but would also hit another object before it.
@@ -408,10 +403,25 @@ it never enters the second chunk and thus never checks for an intersection with 
 This leads to a wrong result as the ray should bounce off of object 2 instead.
 This error can also occur with the original CW88 algorithm,
 but incidentally becomes easier to fix through this adaptation.
+\begin{figure}[t!]
+    \includesvg[width=\linewidth]{images/hit_after_chunk.svg}
+    \caption[Demonstration of why only intersections inside a chunk are counted]{An example for why intersections happening outside of the ray's current chunk need to be ignored.}\label{fig:HitAfterChunk}
+\end{figure}
 \newline
-Simply discarding intersections outside the time the ray is within a chunk comes with the downside of duplicate calculations:
+Limiting intersections to ones happening within the time frame the ray spends with the chunk comes with a performance advantage, too:
+Intersection checks for keyframe pairs outside of this window can be skipped,
+reducing the number of intersection checks being run.
+\newline
+On the other hand, simply discarding intersections outside of this time frame comes with the downside of duplicate calculations:
 If an object is inside three chunks the ray travels through, with the intersection happening in the last of those chunks,
-the intersection calculation is run thrice, but tossed away two of those three times.
+the intersection calculation is potentially run thrice, but tossed away two of those three times.
 \newline
-A solution to this could involve storing the intersections for each already checked object in a map-like structure
+Skipping calculations of keyframe pairs outside of the chunk entry/exit time frame reduces this problem,
+but does not fully solve it:
+Say that for \autoref{fig:HitAfterChunk}, during the time the ray traverses the left and middle chunk,
+object 1 is always described by the same pair of keyframes.
+The intersection check then needs to be run for this pair of keyframes in both chunks
+as it is relevant to both, again leading to the problem of finding intersections outside the time frame a ray spends within a chunk.
+\newline
+A solution to this could involve storing the intersections for each already checked keyframe pair in a map-like structure
 and only newly calculating intersections for objects that haven't been checked yet.
